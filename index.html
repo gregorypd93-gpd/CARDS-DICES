@@ -676,8 +676,9 @@ function setTurnBadge(player) {
 function setPointsPill(pts) { $id('pts-val').textContent = pts===null ? '—' : pts; }
 
 function isMyTurn() {
-  if (G.mode !== 'online') return true;
-  return G.current === G.myNum;
+  if (G.mode === 'ai')     return G.current === 1; // player 1 is always human
+  if (G.mode === 'online') return G.current === G.myNum;
+  return true; // local: both players are human
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -864,10 +865,9 @@ function handleInitRoll(val) {
   setStatus(`${G.names[0]}: ${r1} — ${G.names[1]}: ${r2} → ¡Empieza ${G.names[starter-1]}!`);
   setTurnBadge(starter);
 
-  const canRoll = G.mode!=='online' || G.myNum===starter;
   setTimeout(()=>{
     setStatus(`${G.names[starter-1]}: tira el dado.`);
-    if (canRoll) $id('btn-roll').disabled=false;
+    if (isMyTurn()) $id('btn-roll').disabled=false;
     if (G.mode==='ai' && starter===2) aiTakeTurn();
   }, 1800);
 }
@@ -938,11 +938,10 @@ function afterClaim() {
   G.current=G.current===1?2:1;
   setTurnBadge(G.current);
 
-  const canRoll = G.mode!=='online' || G.myNum===G.current;
   setTimeout(()=>{
     setPointsPill(null);
     setStatus(`${G.names[G.current-1]}: tira el dado.`);
-    if (canRoll) $id('btn-roll').disabled=false;
+    if (isMyTurn()) $id('btn-roll').disabled=false;
     if (G.mode==='ai' && G.current===2) aiTakeTurn();
   }, 600);
 }
@@ -951,9 +950,8 @@ function passTurn() {
   G.current=G.current===1?2:1;
   setTurnBadge(G.current);
   setPointsPill(null);
-  const canRoll = G.mode!=='online' || G.myNum===G.current;
   setStatus(`${G.names[G.current-1]}: tira el dado.`);
-  if (canRoll) $id('btn-roll').disabled=false;
+  if (isMyTurn()) $id('btn-roll').disabled=false;
   if (G.mode==='ai' && G.current===2) aiTakeTurn();
 }
 
