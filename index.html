@@ -153,6 +153,8 @@
     .timer-bar { height: 100%; border-radius: 99px; transition: width 1s linear, background-color .5s; background: #22c55e; }
     .timer-bar.warn { background: #f59e0b; } .timer-bar.crit { background: #ef4444; }
     .timer-label { display: flex; justify-content: space-between; font-size: .72rem; color: #555; margin-top: 4px; }
+    .timer-label #timer-secs.urgent { color: #ef4444; font-weight: 700; animation: blink-fast .5s ease-in-out infinite; }
+    @keyframes blink-fast { 0%,100%{opacity:1} 50%{opacity:.15} }
 
     .dice-area { display: flex; flex-direction: column; align-items: center; gap: 14px; }
     .dice { width: 76px; height: 76px; background: #fff; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 2.6rem; color: #1a1a2e; font-weight: 900; box-shadow: 0 6px 20px rgba(0,0,0,.5), inset 0 2px 4px rgba(255,255,255,.35); user-select: none; transition: box-shadow .3s; }
@@ -316,7 +318,7 @@
 
   <div class="timer-wrap hidden" id="timer-wrap">
     <div class="timer-bar-bg"><div class="timer-bar" id="timer-bar" style="width:100%"></div></div>
-    <div class="timer-label"><span>Tiempo</span><span id="timer-secs">25s</span></div>
+    <div class="timer-label"><span>Tiempo</span><span id="timer-secs">20s</span></div>
   </div>
 
   <div class="dice-area">
@@ -371,7 +373,7 @@ if (FB_READY) {
 //  CONSTANTS
 // ═══════════════════════════════════════════════════════════
 const DICE_ICONS   = ['⚀','⚁','⚂','⚃','⚄','⚅'];
-const TURN_SECONDS = 25;
+const TURN_SECONDS = 20;
 
 // ═══════════════════════════════════════════════════════════
 //  STATE
@@ -782,28 +784,21 @@ function updateTimerBar() {
   const bar = $id('timer-bar');
   bar.style.width = pct+'%'; bar.className = 'timer-bar';
   if (pct<=20) bar.classList.add('crit'); else if (pct<=50) bar.classList.add('warn');
-  $id('timer-secs').textContent = G.timerSecs+'s';
+  const secsEl = $id('timer-secs');
+  secsEl.textContent = G.timerSecs+'s';
+  secsEl.classList.toggle('urgent', G.timerSecs<=10);
 }
 
 function onTimerExpired() {
   stopTimer();
   if (!G.waiting) return;
-  setStatus('¡Tiempo agotado! Movimiento automático.');
   G.waiting=false; G.splitFirst=null;
   showEl('btn-deselect',false); $id('legend').classList.remove('show');
-
-  let claimed = [];
-  if (G.canDirect) {
-    G.positions[G.diceVal-1]=G.current; claimed=[G.diceVal];
-  } else if (G.validSplits.length>0) {
-    const [a,b]=G.validSplits[0];
-    if(a>=1&&a<=6) { G.positions[a-1]=G.current; claimed.push(a); }
-    if(b>=1&&b<=6) { G.positions[b-1]=G.current; claimed.push(b); }
-  }
-
-  setPointsPill(0);
-  if (G.mode==='online') pushOnlineState({type:'claim', positions:claimed});
-  afterClaim();
+  $id('dice').classList.remove('active');
+  setPointsPill(null);
+  setStatus(`¡Tiempo agotado! Se pasa el turno a ${G.names[G.current===1?1:0]}.`);
+  if (G.mode==='online') pushOnlineState({type:'skip'});
+  setTimeout(passTurn, 1800);
 }
 
 // ═══════════════════════════════════════════════════════════
