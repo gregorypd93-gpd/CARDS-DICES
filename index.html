@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cartas y Dados</title>
+
+  <!-- Firebase SDKs (cargados pero solo se usan en modo online) -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --p1: #3b82f6; --p1l: #93c5fd;
+      --p2: #ef4444; --p2l: #fca5a5;
+      --gold: #ffd700; --purple: #a78bfa; --teal: #34d399;
+      --bg: #0f0c29; --card-bg: rgba(255,255,255,0.05);
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: radial-gradient(ellipse at top, #1e1b4b 0%, var(--bg) 70%);
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      color: #fff; padding: 16px;
+    }
+
+    /* ── SCREENS ── */
+    .screen { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 560px; }
+    .hidden { display: none !important; }
+
+    /* ── TYPOGRAPHY ── */
+    h1 { font-size: 1.8rem; letter-spacing: 4px; text-transform: uppercase; color: var(--gold); text-shadow: 0 0 24px rgba(255,215,0,.35); margin-bottom: 8px; }
+    h2 { font-size: 1.2rem; color: #c4b5fd; letter-spacing: 2px; margin-bottom: 28px; font-weight: 400; }
+    h3 { font-size: 1.1rem; color: #c4b5fd; margin-bottom: 18px; }
+
+    /* ── MENU BUTTONS ── */
+    .menu-btn {
+      width: 100%; max-width: 320px; padding: 16px 24px;
+      margin-bottom: 12px; border: none; border-radius: 14px;
+      font-size: 1rem; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; gap: 12px;
+      transition: transform .15s, box-shadow .15s;
+      text-align: left;
+    }
+    .menu-btn:hover { transform: scale(1.03); }
+    .menu-btn .icon { font-size: 1.5rem; }
+    .menu-btn .label { display: flex; flex-direction: column; }
+    .menu-btn .label span:last-child { font-size: .75rem; font-weight: 400; opacity: .7; margin-top: 2px; }
+
+    .mb-local  { background: linear-gradient(135deg,#1d4ed8,#3b82f6); box-shadow: 0 4px 20px rgba(59,130,246,.35); }
+    .mb-ai     { background: linear-gradient(135deg,#6d28d9,#a78bfa); box-shadow: 0 4px 20px rgba(124,58,237,.35); }
+    .mb-online { background: linear-gradient(135deg,#065f46,#10b981); box-shadow: 0 4px 20px rgba(16,185,129,.35); }
+
+    /* ── INPUTS ── */
+    .input-group { width: 100%; max-width: 340px; margin-bottom: 16px; }
+    .input-group label { display: block; font-size: .78rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #a5b4fc; margin-bottom: 6px; }
+    .input-group input {
+      width: 100%; padding: 12px 16px; background: rgba(255,255,255,.07);
+      border: 1.5px solid rgba(255,255,255,.15); border-radius: 10px;
+      color: #fff; font-size: 1rem; outline: none; transition: border-color .2s;
+    }
+    .input-group input:focus { border-color: var(--purple); }
+    .input-group input::placeholder { color: #555; }
+
+    /* ── GENERIC BUTTONS ── */
+    .btn {
+      padding: 11px 28px; font-size: .95rem; font-weight: 700;
+      border: none; border-radius: 12px; cursor: pointer;
+      transition: transform .15s, opacity .15s; margin-top: 4px;
+    }
+    .btn:hover:not(:disabled) { transform: scale(1.05); }
+    .btn:active:not(:disabled){ transform: scale(.97); }
+    .btn:disabled { opacity: .35; cursor: not-allowed; }
+    .btn-gold   { background: var(--gold); color: #1a1a2e; }
+    .btn-ghost  { background: rgba(255,255,255,.08); color: #888; border: 1.5px solid #333; }
+    .btn-ghost:hover { border-color: #666; color: #ccc; }
+    .btn-danger { background: rgba(239,68,68,.3); color: #fca5a5; border: 1.5px solid var(--p2); }
+
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+
+    /* ── ROOM CODE ── */
+    .room-code-box {
+      background: rgba(255,255,255,.07); border: 2px dashed rgba(255,255,255,.2);
+      border-radius: 16px; padding: 24px 40px; text-align: center; margin-bottom: 20px;
+    }
+    .room-code-box .code-label { font-size: .7rem; letter-spacing: 2px; text-transform: uppercase; color: #888; margin-bottom: 8px; }
+    .room-code-box .code { font-size: 2.8rem; font-weight: 900; letter-spacing: 8px; color: var(--gold); }
+    .btn-copy { background: transparent; border: 1.5px solid #555; color: #888; border-radius: 8px; padding: 6px 14px; font-size: .78rem; cursor: pointer; margin-top: 10px; transition: all .18s; }
+    .btn-copy:hover { border-color: var(--gold); color: var(--gold); }
+
+    .waiting-dot { display: inline-block; animation: blink 1s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+    /* ── SEPARATOR ── */
+    .sep { width: 100%; max-width: 340px; text-align: center; position: relative; margin: 16px 0; color: #444; font-size: .78rem; }
+    .sep::before, .sep::after { content:''; position:absolute; top:50%; width:40%; height:1px; background:#333; }
+    .sep::before { left:0; } .sep::after { right:0; }
+
+    /* ═══════════════ GAME SCREEN ═══════════════ */
+    .scoreboard { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; width: 100%; max-width: 540px; margin-bottom: 18px; }
+    .score-box { display: flex; flex-direction: column; align-items: center; }
+    .score-name { font-size: .72rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; max-width: 120px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .score-num  { font-size: 2.4rem; font-weight: 900; line-height: 1; }
+    .score-of   { font-size: 1rem; color: #555; }
+    .p1-c { color: var(--p1l); } .p2-c { color: var(--p2l); }
+
+    .turn-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 18px; border-radius: 20px; font-size: .78rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 18px; border: 2px solid transparent; }
+    .turn-badge.p1   { background: rgba(59,130,246,.2); border-color: var(--p1); color: var(--p1l); }
+    .turn-badge.p2   { background: rgba(239,68,68,.2);  border-color: var(--p2); color: var(--p2l); }
+    .turn-badge.init { background: rgba(255,255,255,.06); border-color: #444; color: #888; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; animation: blink 1s ease-in-out infinite; }
+    .p1 .dot { background: var(--p1l); } .p2 .dot { background: var(--p2l); }
+
+    /* ── BOARD ── */
+    .board { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; justify-content: center; }
+    .card {
+      width: 82px; height: 118px; border-radius: 14px;
+      border: 2.5px solid rgba(255,255,255,.1);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-size: 2.5rem; font-weight: 900;
+      transition: transform .2s, box-shadow .2s, background .3s, border-color .3s;
+      background: var(--card-bg); user-select: none; cursor: default;
+    }
+    .card .card-label { font-size: .55rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-top: 5px; opacity: .8; }
+    .card.neutral  { color: rgba(255,255,255,.3); border-color: rgba(255,255,255,.1); }
+    .card.p1-owned { background: rgba(59,130,246,.4); border-color: var(--p1l); color: #fff; box-shadow: 0 4px 16px rgba(59,130,246,.3); }
+    .card.p2-owned { background: rgba(239,68,68,.4);  border-color: var(--p2l); color: #fff; box-shadow: 0 4px 16px rgba(239,68,68,.3); }
+
+    .card.c-direct   { cursor: pointer; border-color: var(--gold)   !important; box-shadow: 0 0 24px rgba(255,215,0,.7)    !important; animation: float .9s ease-in-out infinite alternate; }
+    .card.c-split    { cursor: pointer; border-color: var(--purple) !important; box-shadow: 0 0 20px rgba(167,139,250,.6) !important; animation: float .9s ease-in-out infinite alternate; }
+    .card.c-selected { cursor: pointer; border-color: var(--teal)   !important; box-shadow: 0 0 26px rgba(52,211,153,.75) !important; background: rgba(52,211,153,.25) !important; }
+    .card.c-companion{ cursor: pointer; border-color: var(--teal)   !important; box-shadow: 0 0 20px rgba(52,211,153,.55) !important; animation: float .9s ease-in-out infinite alternate; }
+
+    @keyframes float { from{transform:translateY(0)} to{transform:translateY(-9px)} }
+    .card.c-direct:hover, .card.c-split:hover, .card.c-companion:hover { transform: translateY(-13px); }
+    .card.c-selected:hover { transform: scale(1.06); }
+
+    .cancel-row { display: flex; justify-content: center; margin-bottom: 12px; min-height: 30px; }
+    .btn-deselect { background: transparent; border: 1.5px solid #444; color: #777; border-radius: 20px; padding: 5px 16px; font-size: .78rem; cursor: pointer; transition: all .18s; }
+    .btn-deselect:hover { border-color: var(--teal); color: var(--teal); }
+
+    .legend { display: flex; gap: 14px; margin-bottom: 16px; flex-wrap: wrap; justify-content: center; opacity: 0; transition: opacity .3s; }
+    .legend.show { opacity: 1; }
+    .legend-item { display: flex; align-items: center; gap: 5px; font-size: .7rem; color: #777; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+
+    .points-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 16px; background: rgba(255,255,255,.07); border: 1.5px solid rgba(255,255,255,.12); border-radius: 20px; font-size: .85rem; color: #c4b5fd; margin-bottom: 14px; min-height: 32px; }
+    .points-val { font-size: 1.1rem; font-weight: 900; color: var(--gold); }
+
+    .timer-wrap { width: 100%; max-width: 320px; margin-bottom: 14px; }
+    .timer-bar-bg { height: 8px; background: rgba(255,255,255,.08); border-radius: 99px; overflow: hidden; }
+    .timer-bar { height: 100%; border-radius: 99px; transition: width 1s linear, background-color .5s; background: #22c55e; }
+    .timer-bar.warn { background: #f59e0b; } .timer-bar.crit { background: #ef4444; }
+    .timer-label { display: flex; justify-content: space-between; font-size: .72rem; color: #555; margin-top: 4px; }
+
+    .dice-area { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+    .dice { width: 76px; height: 76px; background: #fff; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 2.6rem; color: #1a1a2e; font-weight: 900; box-shadow: 0 6px 20px rgba(0,0,0,.5), inset 0 2px 4px rgba(255,255,255,.35); user-select: none; transition: box-shadow .3s; }
+    .dice.active { box-shadow: 0 0 28px rgba(255,215,0,.55), 0 6px 20px rgba(0,0,0,.4); }
+    .dice.rolling { animation: spin .55s cubic-bezier(.4,0,.2,1); }
+    @keyframes spin { 0%{transform:rotate(0deg) scale(1)} 30%{transform:rotate(110deg) scale(1.15)} 65%{transform:rotate(250deg) scale(.88)} 100%{transform:rotate(360deg) scale(1)} }
+
+    .status { font-size: .9rem; color: #a5b4fc; text-align: center; max-width: 440px; line-height: 1.5; min-height: 42px; display: flex; align-items: center; justify-content: center; }
+
+    .btn-roll { background: var(--gold); color: #1a1a2e; box-shadow: 0 3px 12px rgba(255,215,0,.35); }
+
+    /* ── WINNER ── */
+    .winner-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.88); display: flex; align-items: center; justify-content: center; z-index: 100; }
+    .winner-box { background: linear-gradient(145deg,#14102e,#1a1740); border: 3px solid var(--gold); border-radius: 24px; padding: 40px 52px; text-align: center; box-shadow: 0 0 60px rgba(255,215,0,.28); max-width: 360px; }
+    .winner-box h2 { font-size: 2rem; color: var(--gold); text-shadow: 0 0 20px rgba(255,215,0,.5); margin-bottom: 8px; }
+    .winner-box p  { font-size: .9rem; color: #a5b4fc; margin-bottom: 26px; }
+
+    /* ── AI TAG ── */
+    .ai-tag { font-size: .6rem; background: rgba(167,139,250,.25); border: 1px solid var(--purple); border-radius: 6px; padding: 2px 6px; margin-left: 4px; vertical-align: middle; color: var(--purple); }
+
+    /* ── ONLINE STATUS ── */
+    .online-status { font-size: .72rem; background: rgba(16,185,129,.15); border: 1px solid #10b981; border-radius: 8px; padding: 4px 10px; color: #6ee7b7; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════ SCREEN: MENU ═══════════════ -->
+<div id="s-menu" class="screen">
+  <h1>🎲 Cartas &amp; Dados</h1>
+  <h2>Elige modo de juego</h2>
+
+  <button class="menu-btn mb-local" onclick="showScreen('s-names-local')">
+    <span class="icon">👥</span>
+    <span class="label"><span>Dos Jugadores</span><span>En la misma pantalla</span></span>
+  </button>
+
+  <button class="menu-btn mb-ai" onclick="showScreen('s-names-ai')">
+    <span class="icon">🤖</span>
+    <span class="label"><span>Contra la IA</span><span>Desafía a la máquina</span></span>
+  </button>
+
+  <button class="menu-btn mb-online" onclick="showScreen('s-online-menu')">
+    <span class="icon">🌐</span>
+    <span class="label"><span>Online</span><span>Juega con un amigo mediante código</span></span>
+  </button>
+</div>
+
+<!-- ═══════════════ SCREEN: NAMES LOCAL ═══════════════ -->
+<div id="s-names-local" class="screen hidden">
+  <h1>🎲 Jugadores</h1>
+  <h2>Introduce los nombres</h2>
+
+  <div class="input-group">
+    <label>Jugador 1</label>
+    <input id="name1-local" type="text" placeholder="Nombre..." maxlength="20">
+  </div>
+  <div class="input-group">
+    <label>Jugador 2</label>
+    <input id="name2-local" type="text" placeholder="Nombre..." maxlength="20">
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-ghost" onclick="showScreen('s-menu')">← Volver</button>
+    <button class="btn btn-gold"  onclick="startLocal()">Jugar</button>
+  </div>
+</div>
+
+<!-- ═══════════════ SCREEN: NAMES AI ═══════════════ -->
+<div id="s-names-ai" class="screen hidden">
+  <h1>🎲 vs IA</h1>
+  <h2>¿Cómo te llamas?</h2>
+
+  <div class="input-group">
+    <label>Tu nombre</label>
+    <input id="name1-ai" type="text" placeholder="Nombre..." maxlength="20">
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-ghost" onclick="showScreen('s-menu')">← Volver</button>
+    <button class="btn btn-gold"  onclick="startAI()">Jugar</button>
+  </div>
+</div>
+
+<!-- ═══════════════ SCREEN: ONLINE MENU ═══════════════ -->
+<div id="s-online-menu" class="screen hidden">
+  <h1>🌐 Online</h1>
+  <h2>¿Crear o unirte a una sala?</h2>
+
+  <div class="input-group">
+    <label>Tu nombre</label>
+    <input id="name-online" type="text" placeholder="Nombre..." maxlength="20">
+  </div>
+
+  <button class="menu-btn mb-online" onclick="createRoom()" style="max-width:280px; margin-top:8px;">
+    <span class="icon">🏠</span>
+    <span class="label"><span>Crear sala</span><span>Genera un código para tu amigo</span></span>
+  </button>
+
+  <div class="sep">o</div>
+
+  <div class="input-group" style="display:flex;gap:8px;align-items:flex-end;">
+    <div style="flex:1">
+      <label>Código de sala</label>
+      <input id="join-code" type="text" placeholder="ABC123" maxlength="6" style="text-transform:uppercase;letter-spacing:4px;font-weight:700;">
+    </div>
+    <button class="btn btn-gold" onclick="joinRoom()" style="margin-bottom:0;padding:12px 18px;">Unirse</button>
+  </div>
+
+  <button class="btn btn-ghost" onclick="showScreen('s-menu')" style="margin-top:12px;">← Volver</button>
+</div>
+
+<!-- ═══════════════ SCREEN: WAITING FOR GUEST ═══════════════ -->
+<div id="s-waiting" class="screen hidden">
+  <h1>🌐 Sala creada</h1>
+  <div class="room-code-box">
+    <div class="code-label">Comparte este código con tu amigo</div>
+    <div class="code" id="display-code">------</div>
+    <button class="btn-copy" onclick="copyCode()">Copiar código</button>
+  </div>
+  <p style="color:#888;font-size:.88rem;margin-bottom:16px;">
+    Esperando a que alguien se una<span class="waiting-dot">.</span><span class="waiting-dot" style="animation-delay:.3s">.</span><span class="waiting-dot" style="animation-delay:.6s">.</span>
+  </p>
+  <button class="btn btn-danger" onclick="cancelRoom()">Cancelar</button>
+</div>
+
+<!-- ═══════════════ SCREEN: GAME ═══════════════ -->
+<div id="s-game" class="screen hidden">
+
+  <div class="online-status hidden" id="online-status">🌐 Online</div>
+
+  <div class="scoreboard">
+    <div class="score-box">
+      <span class="score-name p1-c" id="g-name1">Jugador 1</span>
+      <span class="score-num  p1-c" id="score1">0</span>
+    </div>
+    <span class="score-of">/ 6</span>
+    <div class="score-box">
+      <span class="score-name p2-c" id="g-name2">Jugador 2</span>
+      <span class="score-num  p2-c" id="score2">0</span>
+    </div>
+  </div>
+
+  <div class="turn-badge init" id="turn-badge">
+    <span class="dot hidden" id="dot"></span>
+    <span id="turn-text">Fase de inicio</span>
+  </div>
+
+  <div class="board" id="board"></div>
+
+  <div class="cancel-row">
+    <button class="btn-deselect hidden" id="btn-deselect" onclick="cancelSplitFirst()">✕ Cancelar selección</button>
+  </div>
+
+  <div class="legend" id="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div> Tomar directo</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div> 1ª carta división</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div> Confirmar</div>
+  </div>
+
+  <div class="points-pill">Puntos restantes: <span class="points-val" id="pts-val">—</span></div>
+
+  <div class="timer-wrap hidden" id="timer-wrap">
+    <div class="timer-bar-bg"><div class="timer-bar" id="timer-bar" style="width:100%"></div></div>
+    <div class="timer-label"><span>Tiempo</span><span id="timer-secs">25s</span></div>
+  </div>
+
+  <div class="dice-area">
+    <div class="dice" id="dice">?</div>
+    <div class="status" id="status">—</div>
+    <div class="btn-row">
+      <button class="btn btn-roll" id="btn-roll" onclick="onRoll()">Tirar dado</button>
+      <button class="btn btn-ghost" onclick="backToMenu()" style="font-size:.8rem;padding:8px 14px;">Menú</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── WINNER OVERLAY ── -->
+<div class="winner-overlay hidden" id="winner-overlay">
+  <div class="winner-box">
+    <h2 id="win-title">¡Gana!</h2>
+    <p  id="win-sub">Controló las 6 posiciones</p>
+    <div class="btn-row">
+      <button class="btn btn-gold"  onclick="restartSameMode()">Jugar de nuevo</button>
+      <button class="btn btn-ghost" onclick="backToMenu()">Menú</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  FIREBASE CONFIG
+//  ► Para usar el modo Online:
+//    1. Ve a https://console.firebase.google.com
+//    2. Crea un proyecto → Realtime Database → Crear base de datos
+//    3. Reglas (temporal para desarrollo): { "rules": { ".read": true, ".write": true } }
+//    4. Copia tu configuración aquí abajo
+// ═══════════════════════════════════════════════════════════
+const FB_CONFIG = {
+  apiKey: "AIzaSyBVac0bqMASc0gAXIH3UnPAGf21yyCxlYk",
+  authDomain: "juegos-navegador.firebaseapp.com",
+  databaseURL: "https://juegos-navegador-default-rtdb.firebaseio.com",
+  projectId: "juegos-navegador",
+  storageBucket: "juegos-navegador.firebasestorage.app",
+  messagingSenderId: "763967469197",
+  appId: "1:763967469197:web:f30addb5902b34ece7d4c4"
+};
+const FB_READY = !!FB_CONFIG.apiKey;
+let   fbDB = null;
+
+if (FB_READY) {
+  firebase.initializeApp(FB_CONFIG);
+  fbDB = firebase.database();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CONSTANTS
+// ═══════════════════════════════════════════════════════════
+const DICE_ICONS   = ['⚀','⚁','⚂','⚃','⚄','⚅'];
+const TURN_SECONDS = 25;
+
+// ═══════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════
+const G = {
+  // meta
+  mode:       'local',   // 'local' | 'ai' | 'online'
+  names:      ['Jugador 1','Jugador 2'],
+  myNum:      1,         // online: which player am I (1 or 2)
+  roomCode:   null,
+  roomRef:    null,
+  roomUnsub:  null,
+
+  // game
+  phase:       'init',
+  initStep:    1,
+  initRolls:   [null, null],
+  current:     1,
+  positions:   Array(6).fill(0),
+  diceVal:     null,
+  waiting:     false,
+  canDirect:   false,
+  validSplits: [],
+  splitFirst:  null,
+  timerSecs:   0,
+  timerHandle: null,
+};
+
+// ═══════════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+
+function backToMenu() {
+  stopTimer();
+  cleanupOnline();
+  showEl('winner-overlay', false);
+  showScreen('s-menu');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  GAME START MODES
+// ═══════════════════════════════════════════════════════════
+function startLocal() {
+  G.mode    = 'local';
+  G.names   = [
+    ($id('name1-local').value.trim() || 'Jugador 1'),
+    ($id('name2-local').value.trim() || 'Jugador 2'),
+  ];
+  initGame();
+}
+
+function startAI() {
+  G.mode    = 'ai';
+  G.names   = [
+    ($id('name1-ai').value.trim() || 'Jugador 1'),
+    'IA 🤖',
+  ];
+  initGame();
+}
+
+function restartSameMode() {
+  showEl('winner-overlay', false);
+  if      (G.mode === 'local')  initGame();
+  else if (G.mode === 'ai')     initGame();
+  else                          backToMenu(); // online → back to menu
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ONLINE – CREATE / JOIN
+// ═══════════════════════════════════════════════════════════
+function createRoom() {
+  if (!FB_READY) { alert('Configura Firebase en el archivo HTML para usar el modo online.'); return; }
+  const name = $id('name-online').value.trim() || 'Jugador 1';
+  const code = genCode();
+
+  G.mode    = 'online';
+  G.myNum   = 1;
+  G.names   = [name, '?'];
+  G.roomCode = code;
+
+  const roomRef = fbDB.ref('rooms/' + code);
+  G.roomRef = roomRef;
+
+  roomRef.set({
+    host: name, guest: null, status: 'waiting',
+    state: defaultOnlineState()
+  });
+
+  $id('display-code').textContent = code;
+  showScreen('s-waiting');
+
+  // Listen for guest joining
+  G.roomUnsub = roomRef.child('guest').on('value', snap => {
+    const guest = snap.val();
+    if (guest) {
+      G.names[1] = guest;
+      roomRef.child('guest').off('value');
+      G.roomUnsub = null;
+      startOnline();
+    }
+  });
+}
+
+function joinRoom() {
+  if (!FB_READY) { alert('Configura Firebase en el archivo HTML para usar el modo online.'); return; }
+  const name = $id('name-online').value.trim() || 'Jugador 2';
+  const code = ($id('join-code').value.trim()).toUpperCase();
+  if (code.length < 4) { alert('Introduce un código válido.'); return; }
+
+  const roomRef = fbDB.ref('rooms/' + code);
+  roomRef.once('value', snap => {
+    const data = snap.val();
+    if (!data) { alert('Sala no encontrada. Revisa el código.'); return; }
+    if (data.status !== 'waiting') { alert('Esta sala ya está en uso.'); return; }
+
+    G.mode    = 'online';
+    G.myNum   = 2;
+    G.names   = [data.host, name];
+    G.roomCode = code;
+    G.roomRef  = roomRef;
+
+    roomRef.child('guest').set(name);
+    loadOnlineState(data.state);
+    startOnline();
+  });
+}
+
+function cancelRoom() {
+  if (G.roomRef) G.roomRef.remove();
+  cleanupOnline();
+  showScreen('s-online-menu');
+}
+
+function defaultOnlineState() {
+  return { phase:'init', initStep:1, initRolls:[null,null], current:1, positions:[0,0,0,0,0,0], diceVal:null, move:null };
+}
+
+function startOnline() {
+  // Subscribe to state changes
+  G.roomUnsub = G.roomRef.child('state').on('value', snap => {
+    const st = snap.val();
+    if (!st) return;
+    // Only apply if the move was made by the OTHER player
+    if (st.move && st.move.by !== G.myNum) applyOnlineMove(st);
+  });
+
+  initGame();
+}
+
+function cleanupOnline() {
+  if (G.roomRef && G.roomUnsub) {
+    G.roomRef.child('state').off('value');
+    G.roomUnsub = null;
+  }
+  G.roomRef  = null;
+  G.roomCode = null;
+}
+
+function applyOnlineMove(st) {
+  // Sync positions and turn
+  G.positions  = st.positions || G.positions;
+  G.current    = st.current;
+  G.phase      = st.phase;
+  G.initStep   = st.initStep;
+  G.initRolls  = st.initRolls || G.initRolls;
+
+  const mv = st.move;
+  if (!mv) return;
+
+  if (mv.type === 'roll') {
+    stopTimer();
+    G.diceVal = mv.val;
+    animateDice(mv.val, () => {
+      if (G.phase === 'init') handleInitRoll(mv.val);
+      else                    handlePlayRoll(mv.val);
+    });
+  } else if (mv.type === 'claim') {
+    renderBoard();
+    const p1 = G.positions.filter(p=>p===1).length, p2 = G.positions.filter(p=>p===2).length;
+    if (p1===6 || p2===6) { endGame(p1===6?1:2); return; }
+    setTurnBadge(G.current);
+    setTimeout(() => { setPointsPill(null); setStatus(`${G.names[G.current-1]}: tira el dado.`); $id('btn-roll').disabled = false; }, 600);
+  } else if (mv.type === 'skip') {
+    setTurnBadge(G.current);
+    setTimeout(() => { setPointsPill(null); setStatus(`${G.names[G.current-1]}: tira el dado.`); $id('btn-roll').disabled = false; }, 800);
+  }
+}
+
+function pushOnlineState(moveObj) {
+  if (!G.roomRef) return;
+  G.roomRef.child('state').set({
+    phase: G.phase, initStep: G.initStep,
+    initRolls: G.initRolls, current: G.current,
+    positions: G.positions, diceVal: G.diceVal,
+    move: { ...moveObj, by: G.myNum }
+  });
+}
+
+function loadOnlineState(st) {
+  if (!st) return;
+  G.phase = st.phase; G.initStep = st.initStep;
+  G.initRolls = st.initRolls || [null,null];
+  G.current = st.current; G.positions = st.positions || Array(6).fill(0);
+  G.diceVal = st.diceVal;
+}
+
+function genCode() {
+  const ch = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({length:6}, () => ch[Math.floor(Math.random()*ch.length)]).join('');
+}
+
+function copyCode() {
+  navigator.clipboard.writeText(G.roomCode).catch(()=>{});
+  const btn = document.querySelector('.btn-copy');
+  btn.textContent = '¡Copiado!';
+  setTimeout(() => btn.textContent = 'Copiar código', 2000);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  GAME INIT
+// ═══════════════════════════════════════════════════════════
+function initGame() {
+  Object.assign(G, {
+    phase:'init', initStep:1, initRolls:[null,null],
+    current:1, positions:Array(6).fill(0),
+    diceVal:null, waiting:false,
+    canDirect:false, validSplits:[], splitFirst:null,
+    timerSecs:0, timerHandle:null,
+  });
+
+  $id('g-name1').textContent = G.names[0];
+  $id('g-name2').textContent = G.names[1];
+
+  const aiName = G.names[1];
+  $id('g-name2').innerHTML = aiName; // already set above (includes emoji for AI)
+
+  $id('dice').textContent = '?';
+  $id('dice').classList.remove('active');
+  $id('btn-roll').disabled = false;
+  showEl('btn-deselect', false);
+  showEl('winner-overlay', false);
+  showEl('online-status', G.mode === 'online');
+  $id('legend').classList.remove('show');
+  setTurnBadge(null);
+  setPointsPill(null);
+
+  if (G.mode === 'online') {
+    $id('online-status').textContent = `🌐 Sala: ${G.roomCode} — Jugando como Jugador ${G.myNum}`;
+  }
+
+  setStatus('Jugador 1: tira el dado para determinar quién empieza');
+  renderBoard();
+  showScreen('s-game');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════════
+function $id(id) { return document.getElementById(id); }
+function setStatus(msg) { $id('status').textContent = msg; }
+function showEl(id, show) { $id(id).classList.toggle('hidden', !show); }
+
+function allSplits(n) {
+  const seen = new Set(), opts = [];
+  for (let a = 1; a <= 6 && a < n; a++) {
+    const b = n - a;
+    if (b >= 1 && b <= 6 && a !== b) { // same factor = same card twice → invalid
+      const key = [Math.min(a,b), Math.max(a,b)].join(',');
+      if (!seen.has(key)) { seen.add(key); opts.push([a, b]); }
+    }
+  }
+  return opts;
+}
+
+function isClaimable(pos) { return pos >= 1 && pos <= 6 && G.positions[pos-1] !== G.current; }
+function getValidSplits(n) { return allSplits(n).filter(([a,b]) => isClaimable(a) && isClaimable(b)); }
+
+function splitEligible() {
+  const s = new Set();
+  for (const [a,b] of G.validSplits) { s.add(a); s.add(b); }
+  return s;
+}
+function companions(first) {
+  const s = new Set();
+  for (const [a,b] of G.validSplits) { if(a===first)s.add(b); if(b===first)s.add(a); }
+  return s;
+}
+
+function setTurnBadge(player) {
+  const badge=$id('turn-badge'), dot=$id('dot'), text=$id('turn-text');
+  badge.className = 'turn-badge';
+  dot.classList.remove('hidden');
+  if (player===1)      { badge.classList.add('p1'); text.textContent = `Turno: ${G.names[0]}`; }
+  else if (player===2) { badge.classList.add('p2'); text.textContent = `Turno: ${G.names[1]}`; }
+  else { badge.classList.add('init'); dot.classList.add('hidden'); text.textContent = 'Fase de inicio'; }
+}
+
+function setPointsPill(pts) { $id('pts-val').textContent = pts===null ? '—' : pts; }
+
+function isMyTurn() {
+  if (G.mode !== 'online') return true;
+  return G.current === G.myNum;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  BOARD RENDER
+// ═══════════════════════════════════════════════════════════
+function renderBoard() {
+  const board = $id('board');
+  board.innerHTML = '';
+  const eligible = G.waiting ? splitEligible() : new Set();
+  const compSet  = (G.waiting && G.splitFirst!==null) ? companions(G.splitFirst) : new Set();
+
+  for (let i = 1; i <= 6; i++) {
+    const owner = G.positions[i-1];
+    const card  = document.createElement('div');
+    card.className = 'card';
+    if (owner===1)      card.classList.add('p1-owned');
+    else if (owner===2) card.classList.add('p2-owned');
+    else                card.classList.add('neutral');
+
+    let clickable = false;
+    if (G.waiting && isMyTurn()) {
+      if (G.splitFirst===null) {
+        if (G.canDirect && i===G.diceVal)  { card.classList.add('c-direct');    clickable=true; }
+        else if (eligible.has(i))           { card.classList.add('c-split');     clickable=true; }
+      } else {
+        if (i===G.splitFirst)               { card.classList.add('c-selected');  clickable=true; }
+        else if (compSet.has(i))            { card.classList.add('c-companion'); clickable=true; }
+      }
+    }
+
+    const lbl = owner===1 ? G.names[0].substring(0,4) : owner===2 ? G.names[1].substring(0,4) : '';
+    card.innerHTML = `<span>${i}</span><span class="card-label">${lbl}</span>`;
+    if (clickable) card.onclick = () => onCardClick(i);
+    board.appendChild(card);
+  }
+
+  $id('score1').textContent = G.positions.filter(p=>p===1).length;
+  $id('score2').textContent = G.positions.filter(p=>p===2).length;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CARD CLICK
+// ═══════════════════════════════════════════════════════════
+function onCardClick(i) {
+  if (!G.waiting || !isMyTurn()) return;
+  if (G.splitFirst===null) {
+    if (G.canDirect && i===G.diceVal) { claimSingle(i); return; }
+    G.splitFirst = i;
+    const comp = companions(i);
+    if (comp.size===1 && comp.has(i)) { claimTwo(i,i); return; }
+    renderBoard();
+    showEl('btn-deselect', true);
+    setStatus(`Carta ${i} seleccionada. Elige la carta complementaria.`);
+  } else {
+    if (i===G.splitFirst) { cancelSplitFirst(); return; }
+    if (companions(G.splitFirst).has(i)) claimTwo(G.splitFirst, i);
+  }
+}
+
+function cancelSplitFirst() {
+  G.splitFirst = null;
+  showEl('btn-deselect', false);
+  renderBoard();
+  setStatusForCurrentRoll();
+}
+
+function setStatusForCurrentRoll() {
+  const v = G.diceVal, n = G.names[G.current-1];
+  if (G.canDirect && G.validSplits.length>0)
+    setStatus(`${n} sacó ${v} pts. Carta dorada = directa. Cartas moradas = dividir.`);
+  else if (G.canDirect)
+    setStatus(`${n} sacó ${v} pts. Toca la carta ${v}.`);
+  else
+    setStatus(`${n} sacó ${v} pts. La posición ${v} ya es tuya — elige cómo dividir.`);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TIMER
+// ═══════════════════════════════════════════════════════════
+function startTimer() {
+  if (!isMyTurn()) return; // online: only active player has timer
+  stopTimer();
+  G.timerSecs = TURN_SECONDS;
+  showEl('timer-wrap', true);
+  updateTimerBar();
+  G.timerHandle = setInterval(() => {
+    G.timerSecs--;
+    updateTimerBar();
+    if (G.timerSecs<=0) onTimerExpired();
+  }, 1000);
+}
+
+function stopTimer() {
+  clearInterval(G.timerHandle);
+  G.timerHandle = null;
+  showEl('timer-wrap', false);
+}
+
+function updateTimerBar() {
+  const pct = (G.timerSecs/TURN_SECONDS)*100;
+  const bar = $id('timer-bar');
+  bar.style.width = pct+'%'; bar.className = 'timer-bar';
+  if (pct<=20) bar.classList.add('crit'); else if (pct<=50) bar.classList.add('warn');
+  $id('timer-secs').textContent = G.timerSecs+'s';
+}
+
+function onTimerExpired() {
+  stopTimer();
+  if (!G.waiting) return;
+  setStatus('¡Tiempo agotado! Movimiento automático.');
+  G.waiting=false; G.splitFirst=null;
+  showEl('btn-deselect',false); $id('legend').classList.remove('show');
+
+  let claimed = [];
+  if (G.canDirect) {
+    G.positions[G.diceVal-1]=G.current; claimed=[G.diceVal];
+  } else if (G.validSplits.length>0) {
+    const [a,b]=G.validSplits[0];
+    if(a>=1&&a<=6) { G.positions[a-1]=G.current; claimed.push(a); }
+    if(b>=1&&b<=6) { G.positions[b-1]=G.current; claimed.push(b); }
+  }
+
+  setPointsPill(0);
+  if (G.mode==='online') pushOnlineState({type:'claim', positions:claimed});
+  afterClaim();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  DICE
+// ═══════════════════════════════════════════════════════════
+function animateDice(finalVal, cb) {
+  const el=$id('dice'); el.classList.remove('active'); el.classList.add('rolling');
+  let ticks=0;
+  const iv=setInterval(()=>{
+    el.textContent=DICE_ICONS[Math.floor(Math.random()*6)];
+    if(++ticks>=10){ clearInterval(iv); el.classList.remove('rolling'); el.textContent=DICE_ICONS[finalVal-1]; cb(); }
+  },65);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ROLL
+// ═══════════════════════════════════════════════════════════
+function onRoll() {
+  if (!isMyTurn()) return;
+  $id('btn-roll').disabled=true;
+  setPointsPill(null);
+  const val=Math.floor(Math.random()*6)+1;
+  G.diceVal=val;
+
+  if (G.mode==='online') pushOnlineState({type:'roll', val});
+
+  animateDice(val, ()=>{
+    if (G.phase==='init') handleInitRoll(val);
+    else                  handlePlayRoll(val);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INIT PHASE
+// ═══════════════════════════════════════════════════════════
+function handleInitRoll(val) {
+  if (G.initStep===1) {
+    G.initRolls[0]=val;
+    setStatus(`${G.names[0]} sacó ${val}. Ahora tira ${G.names[1]}.`);
+    G.initStep=2;
+
+    if (G.mode==='ai') { setTimeout(aiInitRoll, 900); }
+    else if (G.mode==='local' || (G.mode==='online' && G.myNum===2)) {
+      $id('btn-roll').disabled=false;
+    }
+    return;
+  }
+  G.initRolls[1]=val;
+  const r1=G.initRolls[0], r2=G.initRolls[1];
+  if (r1===r2) {
+    setStatus(`¡Empate ${r1} vs ${r2}! Repiten. Tira ${G.names[0]}.`);
+    G.initRolls=[null,null]; G.initStep=1;
+    if (G.mode==='ai' || G.mode==='local') $id('btn-roll').disabled=false;
+    else if (G.mode==='online' && G.myNum===1) $id('btn-roll').disabled=false;
+    return;
+  }
+  const starter=r1>r2?1:2;
+  G.current=starter; G.phase='play';
+  setStatus(`${G.names[0]}: ${r1} — ${G.names[1]}: ${r2} → ¡Empieza ${G.names[starter-1]}!`);
+  setTurnBadge(starter);
+
+  const canRoll = G.mode!=='online' || G.myNum===starter;
+  setTimeout(()=>{
+    setStatus(`${G.names[starter-1]}: tira el dado.`);
+    if (canRoll) $id('btn-roll').disabled=false;
+    if (G.mode==='ai' && starter===2) aiTakeTurn();
+  }, 1800);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PLAY PHASE
+// ═══════════════════════════════════════════════════════════
+function handlePlayRoll(val) {
+  G.canDirect   = isClaimable(val);
+  G.validSplits = getValidSplits(val);
+  G.splitFirst  = null;
+  showEl('btn-deselect',false);
+  const hasMove = G.canDirect || G.validSplits.length>0;
+  setPointsPill(val);
+
+  if (!hasMove) {
+    const n=G.names[G.current-1];
+    setStatus(`${n} sacó ${val}. Posición ya tomada y sin divisiones válidas. ¡Se pasa el turno!`);
+    G.waiting=false; $id('legend').classList.remove('show');
+    $id('dice').classList.remove('active');
+    if (G.mode==='online') pushOnlineState({type:'skip'});
+    setTimeout(passTurn, 2200);
+    return;
+  }
+
+  G.waiting=true;
+  $id('dice').classList.add('active');
+  $id('legend').classList.add('show');
+  renderBoard();
+  setStatusForCurrentRoll();
+
+  if (isMyTurn()) startTimer();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CLAIMING
+// ═══════════════════════════════════════════════════════════
+function claimSingle(pos) {
+  if (!G.waiting) return;
+  stopTimer();
+  G.positions[pos-1]=G.current;
+  if (G.mode==='online') pushOnlineState({type:'claim', positions:[pos]});
+  finishTurn();
+}
+
+function claimTwo(a,b) {
+  stopTimer();
+  if(a>=1&&a<=6) G.positions[a-1]=G.current;
+  if(b>=1&&b<=6) G.positions[b-1]=G.current;
+  if (G.mode==='online') pushOnlineState({type:'claim', positions:[a,b]});
+  finishTurn();
+}
+
+function finishTurn() {
+  G.waiting=false; G.splitFirst=null;
+  showEl('btn-deselect',false);
+  $id('legend').classList.remove('show');
+  setPointsPill(0);
+  $id('dice').classList.remove('active');
+  afterClaim();
+}
+
+function afterClaim() {
+  renderBoard();
+  const p1=G.positions.filter(p=>p===1).length, p2=G.positions.filter(p=>p===2).length;
+  if (p1===6||p2===6) { endGame(p1===6?1:2); return; }
+
+  G.current=G.current===1?2:1;
+  setTurnBadge(G.current);
+
+  const canRoll = G.mode!=='online' || G.myNum===G.current;
+  setTimeout(()=>{
+    setPointsPill(null);
+    setStatus(`${G.names[G.current-1]}: tira el dado.`);
+    if (canRoll) $id('btn-roll').disabled=false;
+    if (G.mode==='ai' && G.current===2) aiTakeTurn();
+  }, 600);
+}
+
+function passTurn() {
+  G.current=G.current===1?2:1;
+  setTurnBadge(G.current);
+  setPointsPill(null);
+  const canRoll = G.mode!=='online' || G.myNum===G.current;
+  setStatus(`${G.names[G.current-1]}: tira el dado.`);
+  if (canRoll) $id('btn-roll').disabled=false;
+  if (G.mode==='ai' && G.current===2) aiTakeTurn();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  AI
+// ═══════════════════════════════════════════════════════════
+function aiInitRoll() {
+  const val=Math.floor(Math.random()*6)+1;
+  G.diceVal=val;
+  animateDice(val, ()=>handleInitRoll(val));
+}
+
+function aiTakeTurn() {
+  // Small delay to feel natural
+  setTimeout(()=>{
+    const val=Math.floor(Math.random()*6)+1;
+    G.diceVal=val;
+    animateDice(val, ()=>{
+      G.canDirect=isClaimable(val);
+      G.validSplits=getValidSplits(val);
+      const hasMove=G.canDirect||G.validSplits.length>0;
+      setPointsPill(val);
+
+      if (!hasMove) {
+        setStatus(`${G.names[1]} sacó ${val}. Sin movimientos. Pasa el turno.`);
+        G.waiting=false; $id('legend').classList.remove('show');
+        setTimeout(passTurn, 1800);
+        return;
+      }
+
+      const move=aiChoose();
+      setStatus(`${G.names[1]} sacó ${val} pts…`);
+      $id('legend').classList.add('show');
+
+      setTimeout(()=>{
+        $id('legend').classList.remove('show');
+        if (move.type==='single') claimSingle(move.pos);
+        else claimTwo(move.a, move.b);
+      }, 1200);
+    });
+  }, 700);
+}
+
+function aiChoose() {
+  // Score: opponent's position = 3 (reclaim), neutral = 1
+  function score(pos) {
+    const o=G.positions[pos-1];
+    if (o===0)             return 1; // neutral
+    if (o===G.current)     return -9; // own (filtered, shouldn't reach here)
+    return 3;                         // opponent's → reclaim!
+  }
+
+  let best=-Infinity, move=null;
+
+  if (G.canDirect) {
+    const s=score(G.diceVal);
+    if (s>best) { best=s; move={type:'single',pos:G.diceVal}; }
+  }
+
+  for (const [a,b] of G.validSplits) {
+    const s=score(a)+score(b);
+    if (s>best) { best=s; move={type:'split',a,b}; }
+  }
+
+  return move || {type:'single',pos:G.diceVal};
+}
+
+// ═══════════════════════════════════════════════════════════
+//  GAME OVER
+// ═══════════════════════════════════════════════════════════
+function endGame(winner) {
+  G.phase='over'; stopTimer();
+  $id('win-title').textContent=`¡${G.names[winner-1]} gana! 🏆`;
+  $id('win-sub').textContent='Controló las 6 posiciones del tablero';
+  showEl('winner-overlay',true);
+  if (G.mode==='online') cleanupOnline();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════════════════════
+renderBoard();
+</script>
+</body>
+</html>
