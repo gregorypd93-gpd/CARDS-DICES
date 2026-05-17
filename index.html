@@ -678,9 +678,15 @@ function setTurnBadge(player) {
 function setPointsPill(pts) { $id('pts-val').textContent = pts===null ? '—' : pts; }
 
 function isMyTurn() {
-  if (G.mode === 'ai')     return G.current === 1; // player 1 is always human
+  if (G.phase === 'init') {
+    // During init, initStep 1 = P1 rolls, initStep 2 = P2 rolls
+    if (G.mode === 'ai')     return G.initStep === 1;
+    if (G.mode === 'online') return G.initStep === G.myNum;
+    return true; // local
+  }
+  if (G.mode === 'ai')     return G.current === 1;
   if (G.mode === 'online') return G.current === G.myNum;
-  return true; // local: both players are human
+  return true;
 }
 
 // ═══════════════════════════════════════════════════════════
