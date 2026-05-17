@@ -558,9 +558,12 @@ function applyOnlineMove(st) {
     renderBoard();
     const p1 = G.positions.filter(p=>p===1).length, p2 = G.positions.filter(p=>p===2).length;
     if (p1===6 || p2===6) { endGame(p1===6?1:2); return; }
+    // applyOnlineMove only fires for opponent moves → it's always our turn now
+    G.current = G.myNum;
     setTurnBadge(G.current);
     setTimeout(() => { setPointsPill(null); setStatus(`${G.names[G.current-1]}: tira el dado.`); $id('btn-roll').disabled = false; }, 600);
   } else if (mv.type === 'skip') {
+    G.current = G.myNum;
     setTurnBadge(G.current);
     setTimeout(() => { setPointsPill(null); setStatus(`${G.names[G.current-1]}: tira el dado.`); $id('btn-roll').disabled = false; }, 800);
   }
