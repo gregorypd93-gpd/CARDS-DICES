@@ -391,6 +391,100 @@
       text-align: left;
     }
     .howto-slide li {
+      margin-bottom: 8px;
+    }
+
+    /* Four Column Layout */
+    .howto-four-column {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 0;
+      width: 100%;
+      height: 300px;
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      overflow: hidden;
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    .howto-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      text-align: center;
+      border-right: 2px solid var(--border-color);
+      border-bottom: 2px solid var(--border-color);
+      position: relative;
+    }
+
+    .howto-cell:nth-child(2),
+    .howto-cell:nth-child(4) {
+      border-right: none;
+    }
+
+    .howto-cell:nth-child(3),
+    .howto-cell:nth-child(4) {
+      border-bottom: none;
+    }
+
+    .cell-icon {
+      font-size: 2.5rem;
+      margin-bottom: 12px;
+      line-height: 1;
+    }
+
+    .cell-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 8px;
+    }
+
+    .cell-text {
+      font-size: 0.85rem;
+      line-height: 1.5;
+      color: #a5b4fc;
+    }
+
+    .cell-text ol {
+      margin: 0;
+      padding-left: 16px;
+    }
+
+    /* Two Column Layout */
+    .howto-two-column {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 24px;
+      align-items: center;
+      width: 100%;
+      text-align: left;
+    }
+
+    .howto-left, .howto-right {
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: #ffffff;
+    }
+
+    .howto-arrow {
+      font-size: 2.5rem;
+      color: var(--gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.1); opacity: 0.7; }
+    }
+
+    .howto-slide li {
       margin-bottom: 12px;
     }
     .howto-slide strong {
@@ -461,9 +555,9 @@
     /* ═══════════════ GAME SCREEN ═══════════════ */
     .scoreboard {
       display: grid;
-      grid-template-columns: 1fr auto 1fr;
+      grid-template-columns: 1fr 1fr;
       align-items: center;
-      gap: 18px;
+      gap: 32px;
       width: 100%;
       max-width: 540px;
       margin-bottom: 20px;
@@ -478,22 +572,28 @@
       font-weight: 700;
       letter-spacing: 1.5px;
       text-transform: uppercase;
-      margin-bottom: 6px;
-      max-width: 120px;
+      margin-bottom: 8px;
+      max-width: 140px;
       text-align: center;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
     .score-num {
-      font-size: 2.6rem;
+      font-size: 2.2rem;
       font-weight: 900;
       line-height: 1;
+      margin-right: 4px;
     }
     .score-of {
-      font-size: 1.1rem;
+      font-size: .85rem;
       color: #ffffff;
       font-weight: 600;
+    }
+    .score-display {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
     }
     .p1-c { color: var(--p1l); }
     .p2-c { color: var(--p2l); }
@@ -561,6 +661,7 @@
       user-select: none;
       cursor: default;
       backdrop-filter: blur(10px);
+      position: relative;
     }
     .card .card-label {
       font-size: .55rem;
@@ -589,15 +690,24 @@
 
     .card.c-direct {
       cursor: pointer;
-      border-color: var(--gold) !important;
-      box-shadow: 0 0 24px rgba(255, 215, 0, .6) !important;
+      border-color: #fbbf24 !important;
+      box-shadow: 0 0 24px rgba(251, 191, 36, .6) !important;
       animation: float .8s ease-in-out infinite alternate;
+      background: rgba(251, 191, 36, .2) !important;
     }
     .card.c-split {
       cursor: pointer;
-      border-color: var(--purple) !important;
+      border-color: #f97316 !important;
+      box-shadow: 0 0 20px rgba(249, 115, 22, .5) !important;
+      animation: float .8s ease-in-out infinite alternate;
+      background: rgba(249, 115, 22, .2) !important;
+    }
+    .card.c-three-split {
+      cursor: pointer;
+      border-color: #a78bfa !important;
       box-shadow: 0 0 20px rgba(167, 139, 250, .5) !important;
       animation: float .8s ease-in-out infinite alternate;
+      background: rgba(167, 139, 250, .2) !important;
     }
     .card.c-selected {
       cursor: pointer;
@@ -610,6 +720,7 @@
       border-color: var(--teal) !important;
       box-shadow: 0 0 20px rgba(52, 211, 153, .5) !important;
       animation: float .8s ease-in-out infinite alternate;
+      background: rgba(52, 211, 153, .2) !important;
     }
 
     @keyframes float { from { transform: translateY(0) } to { transform: translateY(-8px) } }
@@ -812,14 +923,170 @@
       font-weight: 600;
     }
 
+    /* ── BLOCKED POSITION ── */
+    .card.blocked { opacity: .5; }
+    .card.blocked::after {
+      content: '🔒';
+      font-size: .8rem;
+      position: absolute;
+      top: 4px;
+      right: 5px;
+      line-height: 1;
+    }
+
+    /* ── CARD MODE TARGETS ── */
+    .card.c-steal-target {
+      cursor: pointer;
+      border-color: #f87171 !important;
+      box-shadow: 0 0 22px rgba(248,113,113,.65) !important;
+      animation: float .8s ease-in-out infinite alternate;
+    }
+    .card.c-block-target {
+      cursor: pointer;
+      border-color: #818cf8 !important;
+      box-shadow: 0 0 22px rgba(129,140,248,.65) !important;
+      animation: float .8s ease-in-out infinite alternate;
+    }
+    .card.c-steal-target:hover, .card.c-block-target:hover { transform: translateY(-12px); }
+
+    /* ── SPECIAL CARDS FAN (izquierda del tablero) ── */
+    .hand-section {
+      position: fixed;
+      left: max(10px, calc(50vw - 310px));
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 40;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      pointer-events: none;
+    }
+    .hand-section.hidden { display: none !important; }
+    .hand-title {
+      font-size: .58rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      writing-mode: horizontal-tb;
+    }
+    .hand-cards {
+      position: relative;
+      width: 64px;
+      height: 108px;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column-reverse;
+    }
+    .hand-card {
+      position: absolute;
+      left: 4px;
+      top: 0;
+      width: 56px;
+      height: 78px;
+      border-radius: 10px;
+      border: 1.5px solid transparent;
+      font-family: 'Poppins', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 6px 4px;
+      transform-origin: bottom center;
+      transition: transform .25s, box-shadow .25s, opacity .25s;
+      backdrop-filter: blur(12px);
+      cursor: pointer;
+      pointer-events: all;
+    }
+    .hand-card .fan-icon { font-size: 1.5rem; line-height: 1; }
+    .hand-card .fan-name { font-size: .5rem; font-weight: 700; text-align: center; letter-spacing: .5px; }
+    .hand-card:hover:not(:disabled) {
+      transform: rotate(var(--rot,0deg)) translateY(-20px) scale(1.12) !important;
+      z-index: 30 !important;
+      box-shadow: 0 12px 28px rgba(0,0,0,.5) !important;
+    }
+    .hand-card:disabled { 
+      opacity: .4; 
+      cursor: not-allowed;
+      filter: grayscale(100%);
+    }
+    .hand-card.card-steal { background: rgba(239,68,68,.3);  border-color: #f87171; color: #fca5a5; box-shadow: 0 4px 12px rgba(239,68,68,.3); }
+    .hand-card.card-block { background: rgba(99,102,241,.3); border-color: #818cf8; color: #a5b4fc; box-shadow: 0 4px 12px rgba(99,102,241,.3); }
+    .hand-card.card-skip  { background: rgba(245,158,11,.3); border-color: #f59e0b; color: #fcd34d; box-shadow: 0 4px 12px rgba(245,158,11,.3); }
+    .hand-card.selecting  {
+      transform: rotate(var(--rot,0deg)) translateY(-18px) scale(1.08) !important;
+      z-index: 30 !important;
+      box-shadow: 0 0 22px rgba(255,255,255,.55) !important;
+    }
+
+    /* ── CARD DRAW NOTIFICATION ── */
+    .card-notif {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(20,16,46,.97);
+      border: 1.5px solid var(--gold);
+      border-radius: 12px;
+      padding: 10px 22px;
+      font-size: .85rem;
+      font-weight: 700;
+      color: var(--gold);
+      z-index: 200;
+      pointer-events: none;
+      white-space: nowrap;
+      animation: notifIn .3s ease-out;
+    }
+    @keyframes notifIn {
+      from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+      to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
+    /* ── ACTION LOG ── */
+    .action-log {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      width: 260px;
+      max-height: 300px;
+      background: rgba(20,16,46,.9);
+      border: 1.5px solid rgba(255,215,0,.3);
+      border-radius: 12px;
+      padding: 12px;
+      overflow-y: auto;
+      z-index: 30;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      backdrop-filter: blur(10px);
+    }
+    .action-log.show { display: flex; }
+    .action-log-title {
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 4px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(255,215,0,.2);
+    }
+    .action-log-item {
+      font-size: .75rem;
+      color: #ffffff;
+      line-height: 1.4;
+      padding: 6px;
+      background: rgba(255,255,255,.05);
+      border-radius: 6px;
+      border-left: 2px solid var(--gold);
+    }
+    .action-log-item.old { opacity: .5; }
+
     /* Responsive */
-    @media (max-width: 480px) {
-      h1 { font-size: 1.6rem; }
-      .menu-btn { max-width: 100%; padding: 16px 20px; }
-      .input-group { max-width: 100%; }
-      .btn { padding: 10px 20px; font-size: .9rem; }
-      .card { width: 72px; height: 104px; font-size: 2rem; }
-      .dice { width: 68px; height: 68px; font-size: 2.2rem; }
+    @media (max-width: 1024px) {
+      .action-log { display: none !important; }
     }
   </style>
 </head>
@@ -979,17 +1246,28 @@
 <!-- ═══════════════ SCREEN: GAME ═══════════════ -->
 <div id="s-game" class="screen hidden">
 
+  <!-- ── ACTION LOG ── -->
+  <div class="action-log" id="action-log" style="margin: 4px 0px 0px">
+    <div class="action-log-title">📋 Log</div>
+    <div id="action-log-items"></div>
+  </div>
+
   <div class="online-status hidden" id="online-status">🌐 Online</div>
 
   <div class="scoreboard">
     <div class="score-box">
       <span class="score-name p1-c" id="g-name1">Jugador 1</span>
-      <span class="score-num  p1-c" id="score1">0</span>
+      <div class="score-display">
+        <span class="score-num p1-c" id="score1">0</span>
+        <span class="score-of">/ 6</span>
+      </div>
     </div>
-    <span class="score-of">/ 6</span>
     <div class="score-box">
       <span class="score-name p2-c" id="g-name2">Jugador 2</span>
-      <span class="score-num  p2-c" id="score2">0</span>
+      <div class="score-display">
+        <span class="score-num p2-c" id="score2">0</span>
+        <span class="score-of">/ 6</span>
+      </div>
     </div>
   </div>
 
@@ -1000,25 +1278,32 @@
 
   <div class="board" id="board"></div>
 
+  <!-- ── SPECIAL CARDS HAND ── -->
+  <div class="hand-section hidden" id="hand-section">
+    <div class="hand-title">🃏 <span id="hand-title-text">Cartas especiales</span></div>
+    <div class="hand-cards" id="hand-cards"></div>
+  </div>
+
   <div class="cancel-row">
     <button class="btn-deselect hidden" id="btn-deselect" onclick="cancelSplitFirst()" data-i18n="cancel-selection">✕ Cancelar selección</button>
   </div>
 
   <div class="legend" id="legend">
-    <div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div><span data-i18n="direct">Tomar directo</span></div>
-    <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div><span data-i18n="split1">1ª carta división</span></div>
+    <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div><span data-i18n="direct">Tomar directo</span></div>
+    <div class="legend-item"><div class="legend-dot" style="background:#f97316"></div><span data-i18n="split2">Dividir en 2</span></div>
+    <div class="legend-item"><div class="legend-dot" style="background:#a78bfa"></div><span data-i18n="split3">Dividir en 3</span></div>
     <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div><span data-i18n="confirm">Confirmar</span></div>
   </div>
 
-  <div class="points-pill"><span data-i18n="remaining-points">Puntos restantes:</span> <span class="points-val" id="pts-val">—</span></div>
+  <div class="points-pill" style="opacity: 0"><span data-i18n="remaining-points">Puntos restantes:</span> <span class="points-val" id="pts-val">—</span></div>
 
-  <div class="timer-wrap hidden" id="timer-wrap">
-    <div class="timer-bar-bg"><div class="timer-bar" id="timer-bar" style="width:100%"></div></div>
+  <div class="timer-wrap hidden" id="timer-wrap" style="margin: -5px 0px 16px">
+    <div class="timer-bar-bg"><div class="timer-bar" id="timer-bar" style="width: 100%; padding: 2px 0px 0px; margin: 2px 0px 0px"></div></div>
     <div class="timer-label"><span data-i18n="time">Tiempo</span><span id="timer-secs">20s</span></div>
   </div>
 
   <div class="dice-area">
-    <div class="dice" id="dice">?</div>
+    <div class="dice" id="dice" style="margin: 0px">?</div>
     <div class="status" id="status">—</div>
     <div class="btn-row">
       <button class="btn btn-roll" id="btn-roll" onclick="onRoll()" data-i18n="roll">Tirar dado</button>
@@ -1078,7 +1363,8 @@ const i18n = {
     'cancel': 'Cancelar',
     'cancel-selection': '✕ Cancelar selección',
     'direct': 'Tomar directo',
-    'split1': '1ª carta división',
+    'split2': 'Dividir en 2',
+    'split3': 'Dividir en 3',
     'confirm': 'Confirmar',
     'remaining-points': 'Puntos restantes:',
     'time': 'Tiempo',
@@ -1120,7 +1406,8 @@ const i18n = {
     'cancel': 'Cancel',
     'cancel-selection': '✕ Cancel Selection',
     'direct': 'Claim directly',
-    'split1': '1st card split',
+    'split2': 'Split in 2',
+    'split3': 'Split in 3',
     'confirm': 'Confirm',
     'remaining-points': 'Remaining points:',
     'time': 'Time',
@@ -1134,65 +1421,55 @@ const howtoContent = {
   es: [
     {
       icon: '🎯',
-      title: 'Objetivo del Juego',
-      content: 'Sé el primero en controlar las <strong>6 posiciones</strong> del tablero. Cada posición es una tarjeta numerada del 1 al 6.'
-    },
-    {
-      icon: '🎲',
-      title: 'Fase de Inicio',
-      content: 'Los dos jugadores tiran el dado. Quien saca el número mayor empieza el juego. Si hay empate, se repite.'
-    },
-    {
-      icon: '📋',
-      title: 'Cada Turno',
-      content: '<ol><li><strong>Tira el dado</strong> y obten un número del 1 al 6</li><li><strong>Reclama posiciones</strong> según el resultado</li><li><strong>Pasa el turno</strong> al siguiente jugador</li></ol>'
+      title: 'Cómo Jugar',
+      fourColumn: true,
+      sections: [
+        { icon: '🎯', title: 'Objetivo del Juego', text: 'Sé el primero en controlar las <strong>6 posiciones</strong> del tablero. Cada posición es una tarjeta numerada del 1 al 6.' },
+        { icon: '⏱️', title: 'Límite de Tiempo', text: 'Tienes <strong>20 segundos</strong> para hacer tu movimiento. Si se agota el tiempo, pierdes el turno.' },
+        { icon: '🎲', title: 'Fase de Inicio', text: 'Los dos jugadores tiran el dado. Quien saca el número mayor empieza el juego. Si hay empate, se repite.' },
+        { icon: '📋', title: 'Cada Turno', text: '<ol style="margin:0;text-align:left;"><li><strong>Tira el dado</strong></li><li><strong>Reclama posiciones</strong></li><li><strong>Pasa el turno</strong></li></ol>' }
+      ]
     },
     {
       icon: '⭐',
       title: 'Cómo Reclamar',
-      content: '<strong>Opción 1 - Tomar Directo (Dorado):</strong> Si la posición del número que sacaste está libre o es del oponente, puedes tomarla directamente.<br><br><strong>Opción 2 - Dividir (Morado):</strong> Si no puedes tomar directo, busca dos números que sumen el resultado del dado y que ambos estén disponibles. Reclama ambas posiciones.'
+      twoColumn: true,
+      left: '<strong>Cómo Reclamar</strong><br><br>🟡 <strong>Tomar Directo:</strong> Toma la posición del número que sacaste.<br><br>🟠 <strong>Dividir en 2:</strong> Busca dos números que sumen el resultado.<br><br>🟣 <strong>Dividir en 3:</strong> Si sacas 6, puedes dividir en 1+2+3.',
+      right: '<strong>Cartas Especiales</strong><br><br>Cada 3 turnos recibes una carta especial que modifica el juego.<br><br>🦅 <strong>Robar:</strong> Toma posición del oponente<br><br>🛡️ <strong>Bloquear:</strong> Protege tus posiciones<br><br>⏭️ <strong>Saltar:</strong> Salta turno del oponente'
     },
     {
-      icon: '⏱️',
-      title: 'Límite de Tiempo',
-      content: 'Tienes <strong>20 segundos</strong> para hacer tu movimiento. Si se agota el tiempo, pierdes el turno.'
-    },
-    {
-      icon: '🏆',
-      title: 'Ganar',
-      content: 'El primer jugador en controlar las 6 posiciones gana la partida. \n¡Buena suerte!'
+      icon: '🎴',
+      title: 'Resumen & Ganar',
+      twoColumn: true,
+      left: '<strong>Resumen Rápido</strong><br><br>1. 🎲 Tira el dado<br>2. 🎯 Reclama posiciones<br>3. 🎴 Usa cartas si tienes<br>4. ➡️ Pasa al siguiente',
+      right: '<strong>¿Cómo Ganar?</strong><br><br>El primer jugador en controlar todas las <strong>6 posiciones</strong> gana la partida.<br><br>¡Buena suerte!'
     }
   ],
   en: [
     {
       icon: '🎯',
-      title: 'Game Objective',
-      content: 'Be the first to control all <strong>6 positions</strong> on the board. Each position is a card numbered 1 to 6.'
-    },
-    {
-      icon: '🎲',
-      title: 'Initialization Phase',
-      content: 'Both players roll the dice. Whoever rolls the highest number starts the game. If there\'s a tie, roll again.'
-    },
-    {
-      icon: '📋',
-      title: 'Each Turn',
-      content: '<ol><li><strong>Roll the dice</strong> to get a number from 1 to 6</li><li><strong>Claim positions</strong> based on the result</li><li><strong>Pass the turn</strong> to the next player</li></ol>'
+      title: 'How to Play',
+      fourColumn: true,
+      sections: [
+        { icon: '🎯', title: 'Game Objective', text: 'Be the first to control all <strong>6 positions</strong> on the board. Each position is a card numbered 1 to 6.' },
+        { icon: '⏱️', title: 'Time Limit', text: 'You have <strong>20 seconds</strong> to make your move. If time runs out, you forfeit your turn.' },
+        { icon: '🎲', title: 'Start Phase', text: 'Both players roll the dice. Whoever rolls the highest number starts the game. If there\'s a tie, roll again.' },
+        { icon: '📋', title: 'Each Turn', text: '<ol style="margin:0;text-align:left;"><li><strong>Roll the dice</strong></li><li><strong>Claim positions</strong></li><li><strong>Pass turn</strong></li></ol>' }
+      ]
     },
     {
       icon: '⭐',
       title: 'How to Claim',
-      content: '<strong>Option 1 - Claim Directly (Gold):</strong> If the position of the number you rolled is free or belongs to your opponent, you can claim it directly.<br><br><strong>Option 2 - Split (Purple):</strong> If you can\'t claim directly, find two numbers that add up to your dice result and that both are available. Claim both positions.'
+      twoColumn: true,
+      left: '<strong>How to Claim</strong><br><br>🟡 <strong>Claim Direct:</strong> Take the position of the number you rolled.<br><br>🟠 <strong>Split in 2:</strong> Find two numbers that add up.<br><br>🟣 <strong>Split in 3:</strong> If you roll a 6, split into 1+2+3.',
+      right: '<strong>Special Cards</strong><br><br>Every 3 turns you get a special card that changes the game.<br><br>🦅 <strong>Steal:</strong> Claim opponent position<br><br>🛡️ <strong>Block:</strong> Protect your positions<br><br>⏭️ <strong>Skip:</strong> Skip opponent turn'
     },
     {
-      icon: '⏱️',
-      title: 'Time Limit',
-      content: 'You have <strong>20 seconds</strong> to make your move. If time runs out, you forfeit your turn.'
-    },
-    {
-      icon: '🏆',
-      title: 'Winning',
-      content: 'The first player to control all 6 positions wins the game. Good luck!'
+      icon: '🎴',
+      title: 'Quick Summary & Win',
+      twoColumn: true,
+      left: '<strong>Quick Summary</strong><br><br>1. 🎲 Roll the dice<br>2. 🎯 Claim positions<br>3. 🎴 Use cards if you have<br>4. ➡️ Pass to next player',
+      right: '<strong>How to Win?</strong><br><br>The first player to control all <strong>6 positions</strong> wins the game.<br><br>Good luck!'
     }
   ]
 };
@@ -1217,12 +1494,48 @@ function updateUI() {
   const dotsContainer = document.getElementById('howto-dots');
   if (carouselContainer && dotsContainer) {
     const content = howtoContent[currentLang];
-    carouselContainer.innerHTML = content.map((section, idx) => `
-      <div class="howto-slide ${idx === 0 ? 'active' : ''}">
-        <h3><span>${section.icon}</span> ${section.title}</h3>
-        <p>${section.content}</p>
-      </div>
-    `).join('');
+    carouselContainer.innerHTML = content.map((section, idx) => {
+      if (section.fourColumn) {
+        return `
+          <div class="howto-slide ${idx === 0 ? 'active' : ''}">
+            <h3><span>${section.icon}</span> ${section.title}</h3>
+            <div class="howto-four-column">
+              <div class="howto-cell">
+                <div class="cell-icon">${section.sections[0].icon}</div>
+                <div class="cell-title">${section.sections[0].title}</div>
+                <div class="cell-text">${section.sections[0].text}</div>
+              </div>
+              <div class="howto-cell">
+                <div class="cell-icon">${section.sections[1].icon}</div>
+                <div class="cell-title">${section.sections[1].title}</div>
+                <div class="cell-text">${section.sections[1].text}</div>
+              </div>
+              <div class="howto-cell">
+                <div class="cell-icon">${section.sections[2].icon}</div>
+                <div class="cell-title">${section.sections[2].title}</div>
+                <div class="cell-text">${section.sections[2].text}</div>
+              </div>
+              <div class="howto-cell">
+                <div class="cell-icon">${section.sections[3].icon}</div>
+                <div class="cell-title">${section.sections[3].title}</div>
+                <div class="cell-text">${section.sections[3].text}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (section.twoColumn) {
+        return `
+          <div class="howto-slide ${idx === 0 ? 'active' : ''}">
+            <h3><span>${section.icon}</span> ${section.title}</h3>
+            <div class="howto-two-column">
+              <div class="howto-left">${section.left}</div>
+              <div class="howto-arrow">→</div>
+              <div class="howto-right">${section.right}</div>
+            </div>
+          </div>
+        `;
+      }
+    }).join('');
     
     dotsContainer.innerHTML = content.map((_, idx) => `
       <div class="howto-dot ${idx === 0 ? 'active' : ''}" onclick="goToHowtoSlide(${idx})"></div>
@@ -1318,8 +1631,19 @@ const G = {
   canDirect:   false,
   validSplits: [],
   splitFirst:  null,
+  splitCompanions: [],
   timerSecs:   0,
   timerHandle: null,
+  // Special cards
+  hands:            [[], []],
+  blockedPos:       {},
+  playerTurns:      [0, 0],
+  cardMode:         null,
+  cardIdx:          -1,
+  usedCardThisTurn: false,
+  noCards:          false,
+  // Action log
+  actionLog:        [],
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -1449,7 +1773,8 @@ function cancelRoom() {
 }
 
 function defaultOnlineState() {
-  return { phase:'init', initStep:1, initRolls:[null,null], current:1, positions:[0,0,0,0,0,0], diceVal:null, move:null };
+  return { phase:'init', initStep:1, initRolls:[null,null], current:1, positions:[0,0,0,0,0,0], diceVal:null, move:null,
+    hands:[[],[]], blockedPos:{}, playerTurns:[0,0] };
 }
 
 function startOnline() {
@@ -1472,11 +1797,14 @@ function cleanupOnline() {
 }
 
 function applyOnlineMove(st) {
-  G.positions  = st.positions || G.positions;
-  G.current    = st.current;
-  G.phase      = st.phase;
-  G.initStep   = st.initStep;
-  G.initRolls  = st.initRolls || G.initRolls;
+  G.positions   = st.positions   || G.positions;
+  G.current     = st.current;
+  G.phase       = st.phase;
+  G.initStep    = st.initStep;
+  G.initRolls   = st.initRolls   || G.initRolls;
+  G.hands       = st.hands       || G.hands;
+  G.blockedPos  = st.blockedPos  || {};
+  G.playerTurns = st.playerTurns || G.playerTurns;
 
   const mv = st.move;
   if (!mv) return;
@@ -1490,15 +1818,38 @@ function applyOnlineMove(st) {
     });
   } else if (mv.type === 'claim') {
     renderBoard();
+    renderHand();
     const p1 = G.positions.filter(p=>p===1).length, p2 = G.positions.filter(p=>p===2).length;
     if (p1===6 || p2===6) { endGame(p1===6?1:2); return; }
     G.current = G.myNum;
     setTurnBadge(G.current);
-    setTimeout(() => { setPointsPill(null); setStatus(getStatusMessage('your-turn', {name: G.names[G.current-1]})); $id('btn-roll').disabled = false; }, 600);
+    setTimeout(() => { setPointsPill(null); setStatus(getStatusMessage('your-turn', {name: G.names[G.current-1]})); $id('btn-roll').disabled = false; renderHand(); }, 600);
   } else if (mv.type === 'skip') {
     G.current = G.myNum;
     setTurnBadge(G.current);
-    setTimeout(() => { setPointsPill(null); setStatus(getStatusMessage('your-turn', {name: G.names[G.current-1]})); $id('btn-roll').disabled = false; }, 800);
+    setTimeout(() => { setPointsPill(null); setStatus(getStatusMessage('your-turn', {name: G.names[G.current-1]})); $id('btn-roll').disabled = false; renderHand(); }, 800);
+  } else if (mv.type === 'card') {
+    renderBoard();
+    renderHand();
+    const p1 = G.positions.filter(p=>p===1).length, p2 = G.positions.filter(p=>p===2).length;
+    if (p1===6 || p2===6) { endGame(p1===6?1:2); return; }
+
+    if (mv.cardType === 'steal' || mv.cardType === 'block') {
+      // El oponente usó carta pero SIGUE siendo su turno (tira el dado después)
+      const oppName = G.names[mv.by - 1];
+      const msg = mv.cardType === 'steal'
+        ? (currentLang === 'es' ? `🦅 ${oppName} robó una posición!` : `🦅 ${oppName} stole a position!`)
+        : (currentLang === 'es' ? `🛡️ ${oppName} bloqueó una posición!` : `🛡️ ${oppName} blocked a position!`);
+      setStatus(msg);
+      setTurnBadge(G.current); // sigue siendo turno del oponente, esperamos su dado
+    } else if (mv.cardType === 'skip') {
+      // Oponente usó Saltar — nuestro turno saltado, el oponente vuelve a jugar (sin cartas)
+      const skipperName = G.names[mv.by - 1];
+      setStatus(currentLang === 'es'
+        ? `⏭️ ${skipperName} usó Saltar Turno. ¡Tu turno fue saltado!`
+        : `⏭️ ${skipperName} used Skip Turn. Your turn was skipped!`);
+      setTurnBadge(G.current); // turno del oponente (ya en G.current del estado enviado)
+    }
   }
 }
 
@@ -1508,6 +1859,7 @@ function pushOnlineState(moveObj) {
     phase: G.phase, initStep: G.initStep,
     initRolls: G.initRolls, current: G.current,
     positions: G.positions, diceVal: G.diceVal,
+    hands: G.hands, blockedPos: G.blockedPos, playerTurns: G.playerTurns,
     move: { ...moveObj, by: G.myNum }
   });
 }
@@ -1518,6 +1870,9 @@ function loadOnlineState(st) {
   G.initRolls = st.initRolls || [null,null];
   G.current = st.current; G.positions = st.positions || Array(6).fill(0);
   G.diceVal = st.diceVal;
+  G.hands       = st.hands       || [[], []];
+  G.blockedPos  = st.blockedPos  || {};
+  G.playerTurns = st.playerTurns || [0, 0];
 }
 
 function genCode() {
@@ -1580,8 +1935,11 @@ function initGame() {
     phase:'init', initStep:1, initRolls:[null,null],
     current:1, positions:Array(6).fill(0),
     diceVal:null, waiting:false,
-    canDirect:false, validSplits:[], splitFirst:null,
+    canDirect:false, validSplits:[], splitFirst:null, splitCompanions:[],
     timerSecs:0, timerHandle:null,
+    hands:[[], []], blockedPos:{}, playerTurns:[0,0],
+    cardMode:null, cardIdx:-1, usedCardThisTurn:false, noCards:false,
+    actionLog: [],
   });
 
   $id('g-name1').textContent = G.names[0];
@@ -1591,6 +1949,7 @@ function initGame() {
   $id('btn-roll').disabled = false;
   showEl('btn-deselect', false);
   showEl('winner-overlay', false);
+  showEl('hand-section', false);
   showEl('online-status', G.mode === 'online');
   $id('legend').classList.remove('show');
   setTurnBadge(null);
@@ -1624,10 +1983,14 @@ function allSplits(n) {
       if (!seen.has(key)) { seen.add(key); opts.push([a, b]); }
     }
   }
+  // Agregar opción 1+2+3=6
+  if (n === 6) {
+    opts.push([1, 2, 3]);
+  }
   return opts;
 }
 
-function isClaimable(pos) { return pos >= 1 && pos <= 6 && G.positions[pos-1] !== G.current; }
+function isClaimable(pos) { return pos >= 1 && pos <= 6 && G.positions[pos-1] !== G.current && !G.blockedPos[pos]; }
 function getValidSplits(n) { return allSplits(n).filter(([a,b]) => isClaimable(a) && isClaimable(b)); }
 
 function splitEligible() {
@@ -1637,7 +2000,17 @@ function splitEligible() {
 }
 function companions(first) {
   const s = new Set();
-  for (const [a,b] of G.validSplits) { if(a===first)s.add(b); if(b===first)s.add(a); }
+  for (const split of G.validSplits) {
+    if (split.length === 2) {
+      const [a,b] = split;
+      if(a===first)s.add(b); if(b===first)s.add(a);
+    } else if (split.length === 3) {
+      const [a,b,c] = split;
+      if(a===first) { s.add(b); s.add(c); }
+      else if(b===first) { s.add(a); s.add(c); }
+      else if(c===first) { s.add(a); s.add(b); }
+    }
+  }
   return s;
 }
 
@@ -1660,6 +2033,21 @@ function setTurnBadge(player) {
 
 function setPointsPill(pts) { $id('pts-val').textContent = pts===null ? '—' : pts; }
 
+function addActionLog(msg) {
+  G.actionLog.unshift(msg);
+  if (G.actionLog.length > 10) G.actionLog.pop();
+  renderActionLog();
+}
+
+function renderActionLog() {
+  const container = $id('action-log-items');
+  if (!container) return;
+  container.innerHTML = G.actionLog.map((msg, idx) => 
+    `<div class="action-log-item ${idx > 5 ? 'old' : ''}">${msg}</div>`
+  ).join('');
+  $id('action-log').classList.toggle('show', G.phase === 'play');
+}
+
 function isMyTurn() {
   if (G.phase === 'init') {
     if (G.mode === 'ai')     return G.initStep === 1;
@@ -1680,6 +2068,17 @@ function renderBoard() {
   const eligible = G.waiting ? splitEligible() : new Set();
   const compSet  = (G.waiting && G.splitFirst!==null) ? companions(G.splitFirst) : new Set();
 
+  // Detectar qué posiciones son divisiones de 3
+  const threeCardPositions = new Set();
+  for (const split of G.validSplits) {
+    if (split.length === 3) {
+      const [a,b,c] = split;
+      threeCardPositions.add(a);
+      threeCardPositions.add(b);
+      threeCardPositions.add(c);
+    }
+  }
+
   for (let i = 1; i <= 6; i++) {
     const owner = G.positions[i-1];
     const card  = document.createElement('div');
@@ -1688,20 +2087,37 @@ function renderBoard() {
     else if (owner===2) card.classList.add('p2-owned');
     else                card.classList.add('neutral');
 
-    let clickable = false;
-    if (G.waiting && isMyTurn()) {
+    if (G.blockedPos[i]) card.classList.add('blocked');
+
+    if (G.cardMode && isMyTurn()) {
+      const me = G.mode === 'online' ? G.myNum : G.current;
+      if (G.cardMode === 'steal' && owner !== 0 && owner !== me && !G.blockedPos[i]) {
+        card.classList.add('c-steal-target');
+        card.onclick = () => handleCardPositionClick(i);
+      } else if (G.cardMode === 'block' && owner === me && !G.blockedPos[i]) {
+        card.classList.add('c-block-target');
+        card.onclick = () => handleCardPositionClick(i);
+      }
+    } else if (G.waiting && isMyTurn()) {
       if (G.splitFirst===null) {
-        if (G.canDirect && i===G.diceVal)  { card.classList.add('c-direct');    clickable=true; }
-        else if (eligible.has(i))           { card.classList.add('c-split');     clickable=true; }
+        if (G.canDirect && i===G.diceVal)  { card.classList.add('c-direct');    card.onclick = () => onCardClick(i); }
+        else if (eligible.has(i)) {
+          // Determinar si es división de 2 o de 3
+          if (threeCardPositions.has(i)) {
+            card.classList.add('c-three-split');
+          } else {
+            card.classList.add('c-split');
+          }
+          card.onclick = () => onCardClick(i);
+        }
       } else {
-        if (i===G.splitFirst)               { card.classList.add('c-selected');  clickable=true; }
-        else if (compSet.has(i))            { card.classList.add('c-companion'); clickable=true; }
+        if (i===G.splitFirst)               { card.classList.add('c-selected');  card.onclick = () => onCardClick(i); }
+        else if (compSet.has(i))            { card.classList.add('c-companion'); card.onclick = () => onCardClick(i); }
       }
     }
 
     const lbl = owner===1 ? G.names[0].substring(0,4) : owner===2 ? G.names[1].substring(0,4) : '';
     card.innerHTML = `<span>${i}</span><span class="card-label">${lbl}</span>`;
-    if (clickable) card.onclick = () => onCardClick(i);
     board.appendChild(card);
   }
 
@@ -1719,17 +2135,65 @@ function onCardClick(i) {
     G.splitFirst = i;
     const comp = companions(i);
     if (comp.size===1 && comp.has(i)) { claimTwo(i,i); return; }
+    
+    // Verificar si es una división de 3 (1+2+3)
+    for (const split of G.validSplits) {
+      if (split.length === 3) {
+        const [a,b,c] = split;
+        if (a === i) {
+          G.splitCompanions = [b, c];
+          renderBoard();
+          showEl('btn-deselect', true);
+          setStatus(getStatusMessage('select-split', {name: i}));
+          return;
+        }
+        if (b === i) {
+          G.splitCompanions = [a, c];
+          renderBoard();
+          showEl('btn-deselect', true);
+          setStatus(getStatusMessage('select-split', {name: i}));
+          return;
+        }
+        if (c === i) {
+          G.splitCompanions = [a, b];
+          renderBoard();
+          showEl('btn-deselect', true);
+          setStatus(getStatusMessage('select-split', {name: i}));
+          return;
+        }
+      }
+    }
+    
     renderBoard();
     showEl('btn-deselect', true);
     setStatus(getStatusMessage('select-split', {name: i}));
   } else {
     if (i===G.splitFirst) { cancelSplitFirst(); return; }
-    if (companions(G.splitFirst).has(i)) claimTwo(G.splitFirst, i);
+    const comp = companions(G.splitFirst);
+    if (comp.has(i)) {
+      // Verificar si es división de 3
+      for (const split of G.validSplits) {
+        if (split.length === 3) {
+          const [a,b,c] = split;
+          if ((a===G.splitFirst && b===i) || (a===G.splitFirst && c===i) ||
+              (b===G.splitFirst && a===i) || (b===G.splitFirst && c===i) ||
+              (c===G.splitFirst && a===i) || (c===G.splitFirst && b===i)) {
+            // Encontró el tercero
+            const tercero = [a,b,c].find(x => x!==G.splitFirst && x!==i);
+            claimTwo(G.splitFirst, i, tercero);
+            return;
+          }
+        }
+      }
+      // Si no es de 3, es de 2
+      claimTwo(G.splitFirst, i);
+    }
   }
 }
 
 function cancelSplitFirst() {
   G.splitFirst = null;
+  G.splitCompanions = [];
   showEl('btn-deselect', false);
   renderBoard();
   setStatusForCurrentRoll();
@@ -1837,6 +2301,7 @@ function onRoll() {
 function handleInitRoll(val) {
   if (G.initStep===1) {
     G.initRolls[0]=val;
+    addActionLog(`${G.names[0]} tiró: ${val}`);
     setStatus(getStatusMessage('p2-turn', {name: G.names[1]}));
     G.initStep=2;
 
@@ -1847,11 +2312,13 @@ function handleInitRoll(val) {
     return;
   }
   G.initRolls[1]=val;
+  addActionLog(`${G.names[1]} tiró: ${val}`);
   const r1=G.initRolls[0], r2=G.initRolls[1];
   if (r1===r2) {
     const msg = currentLang === 'es'
       ? `¡Empate ${r1} vs ${r2}! Repiten. Tira ${G.names[0]}.`
       : `Tie ${r1} vs ${r2}! Roll again. ${G.names[0]} rolls.`;
+    addActionLog(`¡Empate! ${r1} vs ${r2}`);
     setStatus(msg);
     G.initRolls=[null,null];
     G.initStep=1;
@@ -1862,6 +2329,7 @@ function handleInitRoll(val) {
   const starter=r1>r2?1:2;
   G.current=starter;
   G.phase='play';
+  addActionLog(`${G.names[starter-1]} inicia (${r1} vs ${r2})`);
   const msg = currentLang === 'es'
     ? `${G.names[0]}: ${r1} — ${G.names[1]}: ${r2} → ¡Empieza ${G.names[starter-1]}!`
     : `${G.names[0]}: ${r1} — ${G.names[1]}: ${r2} → ${G.names[starter-1]} starts!`;
@@ -1882,6 +2350,7 @@ function handlePlayRoll(val) {
   G.canDirect   = isClaimable(val);
   G.validSplits = getValidSplits(val);
   G.splitFirst  = null;
+  G.splitCompanions = [];
   showEl('btn-deselect',false);
   const hasMove = G.canDirect || G.validSplits.length>0;
   setPointsPill(val);
@@ -1904,6 +2373,7 @@ function handlePlayRoll(val) {
   $id('dice').classList.add('active');
   $id('legend').classList.add('show');
   renderBoard();
+  renderHand();
   setStatusForCurrentRoll();
 
   if (isMyTurn()) startTimer();
@@ -1916,21 +2386,26 @@ function claimSingle(pos) {
   if (!G.waiting) return;
   stopTimer();
   G.positions[pos-1]=G.current;
+  addActionLog(`${G.names[G.current-1]} tomó posición ${pos}`);
   if (G.mode==='online') pushOnlineState({type:'claim', positions:[pos]});
   finishTurn();
 }
 
-function claimTwo(a,b) {
+function claimTwo(a, b, c = null) {
   stopTimer();
   if(a>=1&&a<=6) G.positions[a-1]=G.current;
   if(b>=1&&b<=6) G.positions[b-1]=G.current;
-  if (G.mode==='online') pushOnlineState({type:'claim', positions:[a,b]});
+  if(c!==null && c>=1 && c<=6) G.positions[c-1]=G.current;
+  const posStr = c!==null ? `${a}+${b}+${c}` : `${a}+${b}`;
+  addActionLog(`${G.names[G.current-1]} dividió: ${posStr}`);
+  if (G.mode==='online') pushOnlineState({type:'claim', positions: c!==null ? [a,b,c] : [a,b]});
   finishTurn();
 }
 
 function finishTurn() {
   G.waiting=false;
   G.splitFirst=null;
+  G.splitCompanions=[];
   showEl('btn-deselect',false);
   $id('legend').classList.remove('show');
   setPointsPill(0);
@@ -1943,23 +2418,37 @@ function afterClaim() {
   const p1=G.positions.filter(p=>p===1).length, p2=G.positions.filter(p=>p===2).length;
   if (p1===6||p2===6) { endGame(p1===6?1:2); return; }
 
+  const playerIdx = G.current - 1;
+  G.playerTurns[playerIdx]++;
+  decrementBlocked();
+  checkDrawCard(playerIdx);
+
+  G.usedCardThisTurn = false;
+  G.noCards = false;
   G.current=G.current===1?2:1;
   setTurnBadge(G.current);
 
   setTimeout(()=>{
     setPointsPill(null);
     setStatus(getStatusMessage('your-turn', {name: G.names[G.current-1]}));
-    if (isMyTurn()) $id('btn-roll').disabled=false;
+    if (isMyTurn()) { $id('btn-roll').disabled=false; renderHand(); }
     if (G.mode==='ai' && G.current===2) aiTakeTurn();
   }, 600);
 }
 
 function passTurn() {
+  const playerIdx = G.current - 1;
+  G.playerTurns[playerIdx]++;
+  decrementBlocked();
+  checkDrawCard(playerIdx);
+
+  G.usedCardThisTurn = false;
+  G.noCards = false;
   G.current=G.current===1?2:1;
   setTurnBadge(G.current);
   setPointsPill(null);
   setStatus(getStatusMessage('your-turn', {name: G.names[G.current-1]}));
-  if (isMyTurn()) $id('btn-roll').disabled=false;
+  if (isMyTurn()) { $id('btn-roll').disabled=false; renderHand(); }
   if (G.mode==='ai' && G.current===2) aiTakeTurn();
 }
 
@@ -1974,37 +2463,42 @@ function aiInitRoll() {
 
 function aiTakeTurn() {
   setTimeout(()=>{
-    const val=Math.floor(Math.random()*6)+1;
-    G.diceVal=val;
-    animateDice(val, ()=>{
-      G.canDirect=isClaimable(val);
-      G.validSplits=getValidSplits(val);
-      const hasMove=G.canDirect||G.validSplits.length>0;
-      setPointsPill(val);
+    const usedCard = !G.noCards && aiApplyPreRollCard();
+    const rollDelay = usedCard ? 1000 : 0;
 
-      if (!hasMove) {
-        const msg = currentLang === 'es'
-          ? `${G.names[1]} sacó ${val}. Sin movimientos. Pasa el turno.`
-          : `${G.names[1]} rolled ${val}. No moves. Turn passes.`;
-        setStatus(msg);
-        G.waiting=false;
-        $id('legend').classList.remove('show');
-        setTimeout(passTurn, 1800);
-        return;
-      }
+    setTimeout(()=>{
+      const val=Math.floor(Math.random()*6)+1;
+      G.diceVal=val;
+      animateDice(val, ()=>{
+        G.canDirect=isClaimable(val);
+        G.validSplits=getValidSplits(val);
+        const hasMove=G.canDirect||G.validSplits.length>0;
+        setPointsPill(val);
 
-      G.waiting=true; // required so claimSingle/claimTwo don't bail out early
-      const move=aiChoose();
-      const msgAI = currentLang === 'es' ? `${G.names[1]} sacó ${val} pts…` : `${G.names[1]} rolled ${val} pts…`;
-      setStatus(msgAI);
-      $id('legend').classList.add('show');
+        if (!hasMove) {
+          const msg = currentLang === 'es'
+            ? `${G.names[1]} sacó ${val}. Sin movimientos. Pasa el turno.`
+            : `${G.names[1]} rolled ${val}. No moves. Turn passes.`;
+          setStatus(msg);
+          G.waiting=false;
+          $id('legend').classList.remove('show');
+          setTimeout(passTurn, 1800);
+          return;
+        }
 
-      setTimeout(()=>{
-        $id('legend').classList.remove('show');
-        if (move.type==='single') claimSingle(move.pos);
-        else claimTwo(move.a, move.b);
-      }, 1200);
-    });
+        G.waiting=true; // required so claimSingle/claimTwo don't bail out early
+        const move=aiChoose();
+        const msgAI = currentLang === 'es' ? `${G.names[1]} sacó ${val} pts…` : `${G.names[1]} rolled ${val} pts…`;
+        setStatus(msgAI);
+        $id('legend').classList.add('show');
+
+        setTimeout(()=>{
+          $id('legend').classList.remove('show');
+          if (move.type==='single') claimSingle(move.pos);
+          else claimTwo(move.a, move.b);
+        }, 1200);
+      });
+    }, rollDelay);
   }, 700);
 }
 
@@ -2032,6 +2526,265 @@ function aiChoose() {
 }
 
 // ═══════════════════════════════════════════════════════════
+// SPECIAL CARDS
+// ═══════════════════════════════════════════════════════════
+const SPECIAL_CARDS = ['steal', 'block', 'skip'];
+const CARD_ICONS = { steal: '🦅', block: '🛡️', skip: '⏭️' };
+const CARD_NAMES = {
+  es: { steal: 'Robar',    block: 'Bloquear', skip: 'Saltar' },
+  en: { steal: 'Steal',    block: 'Block',    skip: 'Skip'   }
+};
+
+function drawCard(playerIdx) {
+  if (G.hands[playerIdx].length >= 3) return; // mano llena, se salta la carta
+  const type = SPECIAL_CARDS[Math.floor(Math.random() * SPECIAL_CARDS.length)];
+  G.hands[playerIdx].push({ type });
+  const icon = CARD_ICONS[type];
+  const name = CARD_NAMES[currentLang][type];
+  const msg = currentLang === 'es'
+    ? `${G.names[playerIdx]} recibió: ${icon} ${name}!`
+    : `${G.names[playerIdx]} received: ${icon} ${name}!`;
+  showCardNotif(msg);
+  renderHand();
+}
+
+function showCardNotif(msg) {
+  const el = document.createElement('div');
+  el.className = 'card-notif';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2800);
+}
+
+function getVisiblePlayerIdx() {
+  if (G.mode === 'online') return G.myNum - 1;
+  if (G.mode === 'ai')     return 0;
+  return G.current - 1;
+}
+
+const ROT_ANGLES = [[], [0], [-14, 14], [-20, 0, 20]];
+
+function renderHand() {
+  const section   = $id('hand-section');
+  const container = $id('hand-cards');
+  if (!section || !container) return;
+
+  const playerIdx = getVisiblePlayerIdx();
+  const hand = G.hands[playerIdx];
+
+  // Mostrar siempre la mano si estamos en fase de juego
+  if (G.phase !== 'play') { showEl('hand-section', false); return; }
+
+  if (!hand || hand.length === 0) { showEl('hand-section', false); return; }
+  showEl('hand-section', true);
+
+  const canUseCard = isMyTurn() && !G.waiting && G.phase === 'play' && !G.cardMode;
+
+  const rots = ROT_ANGLES[Math.min(hand.length, 3)];
+
+  container.innerHTML = '';
+  hand.forEach((c, idx) => {
+    const rot = rots[idx] ?? 0;
+    const btn = document.createElement('button');
+    btn.className = `hand-card card-${c.type}`;
+    if (G.cardMode !== null && G.cardIdx === idx) btn.classList.add('selecting');
+    
+    // La carta está deshabilitada si:
+    // - No es nuestro turno o estamos esperando
+    // - Ya usamos una carta este turno (excepto si está seleccionada)
+    // - Estamos en modo de cartas diferente
+    const isSelected = G.cardMode !== null && G.cardIdx === idx;
+    const isDisabled = !canUseCard && !isSelected;
+    
+    btn.disabled = isDisabled;
+    btn.style.setProperty('--rot', `${rot}deg`);
+    btn.style.transform = `rotate(${rot}deg)`;
+    btn.style.zIndex = idx + 1;
+    btn.innerHTML = `<span class="fan-icon">${CARD_ICONS[c.type]}</span><span class="fan-name">${CARD_NAMES[currentLang][c.type]}</span>`;
+    btn.onclick = () => onHandCardClick(idx, playerIdx);
+    container.appendChild(btn);
+  });
+}
+
+function onHandCardClick(cardIdx, playerIdx) {
+  if (!isMyTurn() || G.waiting || G.phase !== 'play') return;
+  const card = G.hands[playerIdx][cardIdx];
+  if (!card) return;
+
+  if (G.cardMode !== null && G.cardIdx === cardIdx) { cancelCardMode(); return; }
+
+  if (card.type === 'skip') {
+    G.hands[playerIdx].splice(cardIdx, 1);
+    applySkipCard(playerIdx);
+    return;
+  }
+
+  G.cardMode = card.type;
+  G.cardIdx  = cardIdx;
+  renderHand();
+  renderBoard();
+
+  const msg = card.type === 'steal'
+    ? (currentLang === 'es' ? '🦅 Elige una posición del oponente para robar.' : '🦅 Choose an opponent position to steal.')
+    : (currentLang === 'es' ? '🛡️ Elige una de tus posiciones para bloquear.' : '🛡️ Choose one of your positions to block.');
+  setStatus(msg);
+}
+
+function cancelCardMode() {
+  G.cardMode = null;
+  G.cardIdx  = -1;
+  renderHand();
+  renderBoard();
+  setStatus(getStatusMessage('your-turn', { name: G.names[G.current - 1] }));
+}
+
+function handleCardPositionClick(pos) {
+  if (G.cardMode === 'steal') applyStealCard(pos);
+  else if (G.cardMode === 'block') applyBlockCard(pos);
+}
+
+function applyStealCard(pos) {
+  const playerIdx = G.current - 1;
+  G.positions[pos - 1] = G.current;
+  G.hands[playerIdx].splice(G.cardIdx, 1);
+  G.cardMode = null; G.cardIdx = -1;
+  G.usedCardThisTurn = true;
+  addActionLog(`🦅 ${G.names[playerIdx]} robó posición ${pos}`);
+
+  const msg = currentLang === 'es'
+    ? `🦅 ${G.names[playerIdx]} robó la posición ${pos}! Ahora tira el dado.`
+    : `🦅 ${G.names[playerIdx]} stole position ${pos}! Now roll the dice.`;
+  setStatus(msg);
+
+  if (G.mode === 'online') pushOnlineState({ type: 'card', cardType: 'steal', pos });
+
+  renderBoard();
+  renderHand();
+  $id('btn-roll').disabled = false;
+}
+
+function applyBlockCard(pos) {
+  const playerIdx = G.current - 1;
+  G.hands[playerIdx].splice(G.cardIdx, 1);
+  G.cardMode = null; G.cardIdx = -1;
+  G.usedCardThisTurn = true;
+  G.blockedPos[pos] = 2;
+  addActionLog(`🛡️ ${G.names[playerIdx]} bloqueó posición ${pos}`);
+
+  const msg = currentLang === 'es'
+    ? `🛡️ ${G.names[playerIdx]} bloqueó la posición ${pos}! Ahora tira el dado.`
+    : `🛡️ ${G.names[playerIdx]} blocked position ${pos}! Now roll the dice.`;
+  setStatus(msg);
+
+  if (G.mode === 'online') pushOnlineState({ type: 'card', cardType: 'block', pos });
+
+  renderBoard();
+  renderHand();
+  $id('btn-roll').disabled = false;
+}
+
+function applySkipCard(playerIdx) {
+  // Salta turno del oponente; el jugador que lo usa NO tira dado este turno
+  // pero vuelve a jugar (solo dados, sin cartas)
+  const oppIdx = playerIdx === 0 ? 1 : 0;
+
+  G.playerTurns[playerIdx]++;
+  decrementBlocked();
+  checkDrawCard(playerIdx);
+
+  addActionLog(`⏭️ ${G.names[playerIdx]} usó Saltar Turno`);
+
+  setStatus(currentLang === 'es'
+    ? `⏭️ ${G.names[playerIdx]} usó Saltar Turno. ¡Turno del oponente saltado!`
+    : `⏭️ ${G.names[playerIdx]} used Skip Turn. Opponent's turn skipped!`);
+  renderHand();
+  renderBoard();
+
+  setTimeout(() => {
+    G.current = oppIdx + 1;
+    setTurnBadge(G.current);
+    setStatus(currentLang === 'es'
+      ? `Turno de ${G.names[oppIdx]} saltado...`
+      : `${G.names[oppIdx]}'s turn skipped...`);
+
+    G.playerTurns[oppIdx]++;
+    decrementBlocked();
+    checkDrawCard(oppIdx);
+
+    setTimeout(() => {
+      // Vuelve al jugador que usó la carta, pero solo puede tirar el dado
+      G.current = playerIdx + 1;
+      G.noCards = true;
+      setTurnBadge(G.current);
+      setPointsPill(null);
+      $id('dice').textContent = '?';
+      $id('dice').classList.remove('active');
+
+      if (G.mode === 'online') pushOnlineState({ type: 'card', cardType: 'skip' });
+
+      setStatus(getStatusMessage('your-turn', { name: G.names[playerIdx] }));
+      if (isMyTurn()) { $id('btn-roll').disabled = false; renderHand(); }
+      if (G.mode === 'ai' && G.current === 2) aiTakeTurn();
+    }, 1500);
+  }, 1500);
+}
+
+function decrementBlocked() {
+  for (const pos in G.blockedPos) {
+    G.blockedPos[pos]--;
+    if (G.blockedPos[pos] <= 0) delete G.blockedPos[pos];
+  }
+}
+
+function checkDrawCard(playerIdx) {
+  if (G.playerTurns[playerIdx] > 0 && G.playerTurns[playerIdx] % 3 === 0) {
+    drawCard(playerIdx);
+  }
+}
+
+function aiApplyPreRollCard() {
+  const hand = G.hands[1];
+  if (!hand.length) return false;
+
+  const stealable = G.positions
+    .map((o, i) => (o === 1 && !G.blockedPos[i + 1]) ? i + 1 : null)
+    .filter(Boolean);
+  const blockable = G.positions
+    .map((o, i) => (o === 2 && !G.blockedPos[i + 1]) ? i + 1 : null)
+    .filter(Boolean);
+
+  const stealIdx = hand.findIndex(c => c.type === 'steal');
+  if (stealIdx !== -1 && stealable.length > 0) {
+    hand.splice(stealIdx, 1);
+    const pos = stealable[stealable.length - 1];
+    G.positions[pos - 1] = 2;
+    G.usedCardThisTurn = true;
+    setStatus(currentLang === 'es'
+      ? `🦅 ${G.names[1]} robó la posición ${pos}! Tirando dado…`
+      : `🦅 ${G.names[1]} stole position ${pos}! Rolling dice…`);
+    renderBoard();
+    renderHand();
+    return true; // carta usada, dados siguen
+  }
+
+  const blockIdx = hand.findIndex(c => c.type === 'block');
+  if (blockIdx !== -1 && blockable.length > 0) {
+    hand.splice(blockIdx, 1);
+    const pos = blockable[blockable.length - 1];
+    G.blockedPos[pos] = 4;
+    G.usedCardThisTurn = true;
+    setStatus(currentLang === 'es'
+      ? `🛡️ ${G.names[1]} bloqueó la posición ${pos}! Tirando dado…`
+      : `🛡️ ${G.names[1]} blocked position ${pos}! Rolling dice…`);
+    renderBoard();
+    renderHand();
+    return true; // carta usada, dados siguen
+  }
+
+  return false;
+}
+
+// ═══════════════════════════════════════════════════════════
 // GAME OVER
 // ═══════════════════════════════════════════════════════════
 function endGame(winner) {
@@ -2056,3 +2809,52 @@ setLanguage(currentLang);
 </script>
 </body>
 </html>
+
+<style id="__om-edit-overrides">
+#hand-cards >:is(button,input,textarea) { text-align: right !important }
+#hand-cards >:is(button,input,textarea) { text-align: center !important }
+#hand-cards >:is(button,input,textarea) { padding: 6px 4px !important }
+#hand-cards >:is(button,input,textarea) { padding: 6px 4px !important }
+#hand-cards >:is(button,input,textarea) { margin: 30px !important }
+#hand-cards >:is(button,input,textarea) { margin: 4px !important }
+#hand-cards >:is(button,input,textarea) { margin: 456px !important }
+#hand-cards >:is(button,input,textarea) { margin: 45px !important }
+#hand-cards >:is(button,input,textarea) { padding: 6px 54px 6px 4px !important }
+#hand-cards >:is(button,input,textarea) { padding: 6px 54px 6px 4px !important }
+#hand-cards >:is(button,input,textarea) { margin: 54px 4px 4px !important }
+#hand-cards >:is(button,input,textarea) { margin: 4px !important }
+#hand-cards >:is(button,input,textarea) { margin: 104px 4px 4px !important }
+#hand-cards >:is(button,input,textarea) { margin: 100px 4px 4px !important }
+#hand-cards >:is(button,input,textarea) { margin: 500px 4px 4px !important }
+#hand-cards >:is(button,input,textarea) { margin: 350px 4px 4px !important }
+#hand-cards >:is(button,input,textarea) { margin: 3px 4px 4px !important }
+#hand-cards >:is(button,input,textarea) { margin: 25px 4px 4px !important }
+#hand-cards >:is(button,input,textarea) { margin: 220px 4px 4px !important }
+#hand-cards >:is(button,input,textarea) { margin: 210px 4px 4px !important }
+#hand-cards >:is(button,input,textarea) { margin: 200px 1px 4px 4px !important }
+#hand-cards >:is(button,input,textarea) { margin: 200px 200px 200px 4px !important }
+#hand-cards >:is(button,input,textarea) { margin: 200px !important }
+#hand-cards >:is(button,input,textarea) { margin: 200px 200px 200px 2px !important }
+#hand-cards >:is(button,input,textarea) { margin: 200px 200px 200px -20px !important }
+#hand-cards >:is(button,input,textarea) { margin: 200px !important }
+#hand-cards >:is(button,input,textarea) { margin: 200px 200px 200px 500px !important }
+#hand-cards >:is(button,input,textarea) { margin: 200px 200px 200px 3px !important }
+#hand-cards >:is(button,input,textarea) { margin: 200px 205px 200px 300px !important }
+#hand-cards >:is(button,input,textarea) { margin: 200px 20px 200px 300px !important }
+#hand-cards >:is(button,input,textarea) { margin: 200px 0px 200px 300px !important }
+#hand-cards >:is(button,input,textarea) { margin: 206px 0px 0px 350px !important }
+#hand-cards >:is(button,input,textarea) { margin: 207px 0px 0px 350px !important }
+#hand-cards >:is(button,input,textarea) { margin: 207px 0px 0px 8px !important }
+#hand-cards >:is(button,input,textarea) { margin: 207px 0px 0px 8px !important }
+#hand-cards >:is(button,input,textarea) { margin: 207px 0px 0px 6px !important }
+#hand-cards >:is(button,input,textarea) { margin: 207px 0px 0px 6px !important }
+#hand-cards >:is(button,input,textarea) { margin: 207px 0px 0px 5px !important }
+#hand-cards >:is(button,input,textarea) { margin: 207px 0px 0px 450px !important }
+#hand-cards >:is(button,input,textarea) { margin: 207px 0px 0px 3px !important }
+#hand-cards >:is(button,input,textarea) { margin: 207px 0px 0px 380px !important }
+#hand-cards >:is(button,input,textarea) { margin: 207px 0px 0px 38px !important }
+#hand-cards >:is(button,input,textarea) { margin: 207px 0px 0px 390px !important }
+#hand-cards >:is(button,input,textarea) { margin: 207px 0px 0px 3px !important }
+#hand-cards >:is(button,input,textarea) { margin: 207px 0px 0px 1px !important }
+#hand-cards >:is(button,input,textarea) { margin: 207px 0px 0px -10px !important }
+</style>
