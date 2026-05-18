@@ -1,0 +1,2057 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cartas y Dados | Cards & Dices</title>
+
+  <!-- Firebase SDKs (cargados pero solo se usan en modo online) -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    :root {
+      --p1: #3b82f6; --p1l: #93c5fd;
+      --p2: #ef4444; --p2l: #fca5a5;
+      --gold: #ffd700; --purple: #a78bfa; --teal: #34d399;
+      --bg: #0f0c29; --card-bg: rgba(255,255,255,0.05);
+      --text-primary: #ffffff;
+      --text-secondary: #a5b4fc;
+      --text-muted: #666;
+      --border-color: rgba(255,255,255,.1);
+      --accent-glow: rgba(255,215,0,.35);
+    }
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #0f0c29 0%, #1a1740 50%, #16213e 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-primary);
+      padding: 16px;
+    }
+
+    /* ── LANGUAGE TOGGLE ── */
+    .lang-toggle {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      display: flex;
+      gap: 6px;
+      z-index: 50;
+    }
+    .lang-btn {
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.2);
+      color: #ffffff;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: .75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .lang-btn.active {
+      background: var(--gold);
+      color: #1a1a2e;
+      border-color: var(--gold);
+    }
+    .lang-btn:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    /* ── SCREENS ── */
+    .screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 560px;
+      opacity: 1;
+      transition: opacity .3s ease-out;
+    }
+    .screen.hidden {
+      display: none !important;
+      opacity: 0;
+    }
+
+    /* ── WINNER OVERLAY HIDDEN ── */
+    .winner-overlay.hidden {
+      display: none !important;
+      visibility: hidden;
+    }
+
+    /* ── TYPOGRAPHY ── */
+    h1 {
+      font-size: 2rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, var(--gold), #ffed4e);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 0 24px var(--accent-glow);
+      margin-bottom: 12px;
+      font-weight: 900;
+    }
+    h2 {
+      font-size: 1.2rem;
+      color: #ffffff;
+      letter-spacing: 1px;
+      margin-bottom: 28px;
+      font-weight: 600;
+    }
+    h3 {
+      font-size: 1.1rem;
+      color: #ffffff;
+      margin-bottom: 18px;
+      font-weight: 600;
+    }
+
+    /* ── MENU BUTTONS ── */
+    .menu-btn {
+      width: 100%;
+      max-width: 340px;
+      padding: 18px 24px;
+      margin-bottom: 14px;
+      border: none;
+      border-radius: 16px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: all .2s;
+      text-align: left;
+      backdrop-filter: blur(10px);
+      border: 1.5px solid transparent;
+    }
+    .menu-btn:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(0,0,0,.4);
+    }
+    .menu-btn .icon { font-size: 1.8rem; }
+    .menu-btn .label {
+      display: flex;
+      flex-direction: column;
+    }
+    .menu-btn .label span:first-child {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+    .menu-btn .label span:last-child {
+      font-size: .8rem;
+      font-weight: 500;
+      opacity: .75;
+      margin-top: 2px;
+    }
+
+    .mb-local {
+      background: linear-gradient(135deg, rgba(29, 78, 216, 0.4), rgba(59, 130, 246, 0.3));
+      border-color: var(--p1);
+      box-shadow: 0 4px 20px rgba(59, 130, 246, .25);
+    }
+    .mb-ai {
+      background: linear-gradient(135deg, rgba(109, 40, 217, 0.4), rgba(124, 58, 237, 0.3));
+      border-color: var(--purple);
+      box-shadow: 0 4px 20px rgba(124, 58, 237, .25);
+    }
+    .mb-online {
+      background: linear-gradient(135deg, rgba(6, 95, 70, 0.4), rgba(16, 185, 129, 0.3));
+      border-color: var(--teal);
+      box-shadow: 0 4px 20px rgba(16, 185, 129, .25);
+    }
+    .mb-howto {
+      background: linear-gradient(135deg, rgba(217, 119, 6, 0.4), rgba(245, 158, 11, 0.3));
+      border-color: #f59e0b;
+      box-shadow: 0 4px 20px rgba(245, 158, 11, .25);
+    }
+
+    /* ── INPUTS ── */
+    .input-group {
+      width: 100%;
+      max-width: 340px;
+      margin-bottom: 18px;
+    }
+    .input-group label {
+      display: block;
+      font-size: .8rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #ffffff;
+      margin-bottom: 8px;
+    }
+    .input-group input {
+      width: 100%;
+      padding: 14px 16px;
+      background: rgba(255, 255, 255, .07);
+      border: 1.5px solid var(--border-color);
+      border-radius: 12px;
+      color: var(--text-primary);
+      font-size: 1rem;
+      font-family: 'Poppins', sans-serif;
+      outline: none;
+      transition: all .2s;
+    }
+    .input-group input:focus {
+      border-color: var(--gold);
+      background: rgba(255, 255, 255, .09);
+      box-shadow: 0 0 12px rgba(255, 215, 0, .2);
+    }
+    .input-group input::placeholder {
+      color: var(--text-muted);
+    }
+
+    /* ── GENERIC BUTTONS ── */
+    .btn {
+      padding: 12px 28px;
+      font-size: .95rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all .2s;
+      margin-top: 4px;
+      font-family: 'Poppins', sans-serif;
+    }
+    .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,.3); }
+    .btn:active:not(:disabled){ transform: translateY(0); }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-gold {
+      background: linear-gradient(135deg, var(--gold), #ffed4e);
+      color: #1a1a2e;
+      font-weight: 800;
+      box-shadow: 0 4px 16px rgba(255, 215, 0, .3);
+    }
+    .btn-ghost {
+      background: rgba(255, 255, 255, .08);
+      color: #ffffff;
+      border: 1.5px solid var(--border-color);
+    }
+    .btn-ghost:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+      background: rgba(255, 255, 255, .12);
+    }
+    .btn-danger {
+      background: rgba(239, 68, 68, .2);
+      color: var(--p2l);
+      border: 1.5px solid var(--p2);
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 12px;
+    }
+
+    /* ── ROOM CODE ── */
+    .room-code-box {
+      background: rgba(255, 255, 255, .07);
+      border: 2px dashed var(--border-color);
+      border-radius: 16px;
+      padding: 28px 40px;
+      text-align: center;
+      margin-bottom: 24px;
+      backdrop-filter: blur(10px);
+    }
+    .room-code-box .code-label {
+      font-size: .75rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .room-code-box .code {
+      font-size: 2.8rem;
+      font-weight: 900;
+      letter-spacing: 8px;
+      color: var(--gold);
+    }
+    .btn-copy {
+      background: transparent;
+      border: 1.5px solid var(--border-color);
+      color: #ffffff;
+      border-radius: 20px;
+      padding: 8px 16px;
+      font-size: .8rem;
+      cursor: pointer;
+      transition: all .2s;
+      margin-top: 12px;
+      font-weight: 600;
+      font-family: 'Poppins', sans-serif;
+    }
+    .btn-copy:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    .waiting-dot {
+      display: inline-block;
+      animation: blink 1s ease-in-out infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+    /* ── SEPARATOR ── */
+    .sep {
+      width: 100%;
+      max-width: 340px;
+      text-align: center;
+      position: relative;
+      margin: 20px 0;
+      color: #ffffff;
+      font-size: .8rem;
+    }
+    .sep::before, .sep::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      width: 40%;
+      height: 1px;
+      background: var(--border-color);
+    }
+    .sep::before { left: 0; }
+    .sep::after { right: 0; }
+
+    /* ═══════════════ HOW TO PLAY SCREEN ═══════════════ */
+    .howto-screen {
+      max-width: 620px;
+      text-align: center;
+    }
+    .howto-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .howto-carousel {
+      position: relative;
+      width: 100%;
+      max-width: 540px;
+      margin: 0 auto 28px;
+    }
+    .howto-slide {
+      display: none;
+      background: linear-gradient(135deg, rgba(29, 78, 216, .15), rgba(124, 58, 237, .15));
+      border: 1.5px solid var(--border-color);
+      border-radius: 18px;
+      padding: 40px 32px;
+      text-align: center;
+      min-height: 380px;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(10px);
+      animation: slideIn .4s ease-out;
+    }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+    .howto-slide.active {
+      display: flex;
+    }
+    .howto-slide h3 {
+      font-size: 1.4rem;
+      color: #ffffff;
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      font-weight: 700;
+    }
+    .howto-slide h3 span {
+      font-size: 3.2rem;
+      line-height: 1;
+    }
+    .howto-slide p {
+      font-size: 1rem;
+      line-height: 1.8;
+      color: #ffffff;
+      margin-bottom: 14px;
+      text-align: center;
+    }
+    .howto-slide p:last-child {
+      margin-bottom: 0;
+    }
+    .howto-slide ol {
+      margin: 0 auto;
+      margin-left: 20px;
+      color: #ffffff;
+      line-height: 1.8;
+      font-size: 1rem;
+      text-align: left;
+    }
+    .howto-slide li {
+      margin-bottom: 12px;
+    }
+    .howto-slide strong {
+      color: var(--gold);
+      font-weight: 700;
+    }
+    .howto-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+    .howto-nav-btn {
+      background: linear-gradient(135deg, var(--gold), #ffed4e);
+      color: #1a1a2e;
+      border: none;
+      border-radius: 50%;
+      width: 52px;
+      height: 52px;
+      font-size: 1.6rem;
+      font-weight: 900;
+      cursor: pointer;
+      transition: all .2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 16px rgba(255, 215, 0, .3);
+    }
+    .howto-nav-btn:hover:not(:disabled) {
+      transform: scale(1.12);
+      box-shadow: 0 6px 24px rgba(255, 215, 0, .4);
+    }
+    .howto-nav-btn:disabled {
+      opacity: .35;
+      cursor: not-allowed;
+    }
+    .howto-dots {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+    .howto-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .2);
+      border: 2px solid rgba(255, 255, 255, .3);
+      cursor: pointer;
+      transition: all .3s;
+    }
+    .howto-dot:hover {
+      background: rgba(255, 255, 255, .4);
+    }
+    .howto-dot.active {
+      background: var(--gold);
+      border-color: var(--gold);
+      width: 28px;
+      border-radius: 6px;
+    }
+    .howto-counter {
+      font-size: .85rem;
+      color: #ffffff;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    /* ═══════════════ GAME SCREEN ═══════════════ */
+    .scoreboard {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 18px;
+      width: 100%;
+      max-width: 540px;
+      margin-bottom: 20px;
+    }
+    .score-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .score-name {
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      max-width: 120px;
+      text-align: center;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .score-num {
+      font-size: 2.6rem;
+      font-weight: 900;
+      line-height: 1;
+    }
+    .score-of {
+      font-size: 1.1rem;
+      color: #ffffff;
+      font-weight: 600;
+    }
+    .p1-c { color: var(--p1l); }
+    .p2-c { color: var(--p2l); }
+
+    .turn-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 20px;
+      border-radius: 24px;
+      font-size: .8rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      border: 2px solid transparent;
+      backdrop-filter: blur(10px);
+      color: #ffffff;
+    }
+    .turn-badge.p1 {
+      background: rgba(59, 130, 246, .2);
+      border-color: var(--p1);
+      color: var(--p1l);
+    }
+    .turn-badge.p2 {
+      background: rgba(239, 68, 68, .2);
+      border-color: var(--p2);
+      color: var(--p2l);
+    }
+    .turn-badge.init {
+      background: rgba(255, 255, 255, .08);
+      border-color: var(--border-color);
+      color: #ffffff;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      animation: blink 1s ease-in-out infinite;
+    }
+    .p1 .dot { background: var(--p1l); }
+    .p2 .dot { background: var(--p2l); }
+
+    /* ── BOARD ── */
+    .board {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .card {
+      width: 84px;
+      height: 120px;
+      border-radius: 14px;
+      border: 2.5px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.6rem;
+      font-weight: 900;
+      transition: all .2s;
+      background: var(--card-bg);
+      user-select: none;
+      cursor: default;
+      backdrop-filter: blur(10px);
+    }
+    .card .card-label {
+      font-size: .55rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-top: 5px;
+      opacity: .7;
+    }
+    .card.neutral {
+      color: rgba(255, 255, 255, .35);
+      border-color: var(--border-color);
+    }
+    .card.p1-owned {
+      background: rgba(59, 130, 246, .35);
+      border-color: var(--p1l);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(59, 130, 246, .3);
+    }
+    .card.p2-owned {
+      background: rgba(239, 68, 68, .35);
+      border-color: var(--p2l);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(239, 68, 68, .3);
+    }
+
+    .card.c-direct {
+      cursor: pointer;
+      border-color: var(--gold) !important;
+      box-shadow: 0 0 24px rgba(255, 215, 0, .6) !important;
+      animation: float .8s ease-in-out infinite alternate;
+    }
+    .card.c-split {
+      cursor: pointer;
+      border-color: var(--purple) !important;
+      box-shadow: 0 0 20px rgba(167, 139, 250, .5) !important;
+      animation: float .8s ease-in-out infinite alternate;
+    }
+    .card.c-selected {
+      cursor: pointer;
+      border-color: var(--teal) !important;
+      box-shadow: 0 0 26px rgba(52, 211, 153, .7) !important;
+      background: rgba(52, 211, 153, .2) !important;
+    }
+    .card.c-companion {
+      cursor: pointer;
+      border-color: var(--teal) !important;
+      box-shadow: 0 0 20px rgba(52, 211, 153, .5) !important;
+      animation: float .8s ease-in-out infinite alternate;
+    }
+
+    @keyframes float { from { transform: translateY(0) } to { transform: translateY(-8px) } }
+    .card.c-direct:hover, .card.c-split:hover, .card.c-companion:hover { transform: translateY(-12px); }
+    .card.c-selected:hover { transform: scale(1.06); }
+
+    .cancel-row {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 14px;
+      min-height: 30px;
+    }
+    .btn-deselect {
+      background: transparent;
+      border: 1.5px solid var(--border-color);
+      color: #ffffff;
+      border-radius: 20px;
+      padding: 6px 16px;
+      font-size: .8rem;
+      cursor: pointer;
+      transition: all .2s;
+      font-weight: 600;
+      font-family: 'Poppins', sans-serif;
+    }
+    .btn-deselect:hover {
+      border-color: var(--teal);
+      color: var(--teal);
+    }
+
+    .legend {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity .3s;
+    }
+    .legend.show { opacity: 1; }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: .75rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+    }
+
+    .points-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 18px;
+      background: rgba(255, 255, 255, .08);
+      border: 1.5px solid var(--border-color);
+      border-radius: 24px;
+      font-size: .9rem;
+      color: #ffffff;
+      margin-bottom: 16px;
+      min-height: 36px;
+      backdrop-filter: blur(10px);
+    }
+    .points-val {
+      font-size: 1.2rem;
+      font-weight: 900;
+      color: var(--gold);
+    }
+
+    .timer-wrap {
+      width: 100%;
+      max-width: 320px;
+      margin-bottom: 16px;
+    }
+    .timer-bar-bg {
+      height: 8px;
+      background: rgba(255, 255, 255, .08);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .timer-bar {
+      height: 100%;
+      border-radius: 99px;
+      transition: width 1s linear, background-color .3s;
+      background: #22c55e;
+    }
+    .timer-bar.warn { background: #f59e0b; }
+    .timer-bar.crit { background: #ef4444; }
+    .timer-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: .75rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+      font-weight: 600;
+    }
+    .timer-label #timer-secs.urgent {
+      color: #ef4444;
+      font-weight: 800;
+      animation: blink-fast .5s ease-in-out infinite;
+    }
+    @keyframes blink-fast { 0%,100%{opacity:1} 50%{opacity:.15} }
+
+    .dice-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+    .dice {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #ffffff, #f9f9f9);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.8rem;
+      color: #1a1a2e;
+      font-weight: 900;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .6), inset 0 2px 4px rgba(255, 255, 255, .4);
+      user-select: none;
+      transition: all .3s;
+    }
+    .dice.active {
+      box-shadow: 0 0 32px rgba(255, 215, 0, .6), 0 8px 24px rgba(0, 0, 0, .5);
+    }
+    .dice.rolling {
+      animation: spin .55s cubic-bezier(.4, 0, .2, 1);
+    }
+    @keyframes spin { 0%{transform:rotate(0deg) scale(1)} 30%{transform:rotate(110deg) scale(1.15)} 65%{transform:rotate(250deg) scale(.88)} 100%{transform:rotate(360deg) scale(1)} }
+
+    .status {
+      font-size: .95rem;
+      color: #ffffff;
+      text-align: center;
+      max-width: 440px;
+      line-height: 1.6;
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-roll {
+      background: linear-gradient(135deg, var(--gold), #ffed4e);
+      color: #1a1a2e;
+      box-shadow: 0 4px 16px rgba(255, 215, 0, .3);
+    }
+
+    /* ── WINNER ── */
+    .winner-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .92);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      backdrop-filter: blur(4px);
+    }
+    .winner-box {
+      background: linear-gradient(145deg, rgba(20, 16, 46, 0.9), rgba(26, 23, 64, 0.95));
+      border: 2px solid var(--gold);
+      border-radius: 24px;
+      padding: 44px 52px;
+      text-align: center;
+      box-shadow: 0 0 60px rgba(255, 215, 0, .25);
+      max-width: 380px;
+      backdrop-filter: blur(10px);
+    }
+    .winner-box h2 {
+      font-size: 2.2rem;
+      background: linear-gradient(135deg, var(--gold), #ffed4e);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+    }
+    .winner-box p {
+      font-size: .95rem;
+      color: #ffffff;
+      margin-bottom: 28px;
+      line-height: 1.6;
+    }
+
+    /* ── ONLINE STATUS ── */
+    .online-status {
+      font-size: .75rem;
+      background: rgba(16, 185, 129, .15);
+      border: 1px solid rgba(16, 185, 129, .5);
+      border-radius: 8px;
+      padding: 5px 12px;
+      color: #6ee7b7;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      h1 { font-size: 1.6rem; }
+      .menu-btn { max-width: 100%; padding: 16px 20px; }
+      .input-group { max-width: 100%; }
+      .btn { padding: 10px 20px; font-size: .9rem; }
+      .card { width: 72px; height: 104px; font-size: 2rem; }
+      .dice { width: 68px; height: 68px; font-size: 2.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── LANGUAGE TOGGLE ── -->
+<div class="lang-toggle">
+  <button class="lang-btn active" data-lang="es" onclick="setLanguage('es')">ES</button>
+  <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">EN</button>
+</div>
+
+<!-- ═══════════════ SCREEN: MENU ═══════════════ -->
+<div id="s-menu" class="screen">
+  <h1>🎲 <span data-i18n="title">Cartas &amp; Dados</span></h1>
+  <h2 data-i18n="choose-mode">Elige modo de juego</h2>
+
+  <button class="menu-btn mb-local" onclick="showScreen('s-names-local')">
+    <span class="icon">👥</span>
+    <span class="label">
+      <span data-i18n="local-title">Dos Jugadores</span>
+      <span data-i18n="local-desc">En la misma pantalla</span>
+    </span>
+  </button>
+
+  <button class="menu-btn mb-ai" onclick="showScreen('s-names-ai')">
+    <span class="icon">🤖</span>
+    <span class="label">
+      <span data-i18n="ai-title">Contra la IA</span>
+      <span data-i18n="ai-desc">Desafía a la máquina</span>
+    </span>
+  </button>
+
+  <button class="menu-btn mb-online" onclick="showScreen('s-online-menu')">
+    <span class="icon">🌐</span>
+    <span class="label">
+      <span data-i18n="online-title">Online</span>
+      <span data-i18n="online-desc">Juega con un amigo mediante código</span>
+    </span>
+  </button>
+
+  <button class="menu-btn mb-howto" onclick="showScreen('s-howto')">
+    <span class="icon">📖</span>
+    <span class="label">
+      <span data-i18n="howto-title">Cómo Jugar</span>
+      <span data-i18n="howto-desc">Aprende las reglas</span>
+    </span>
+  </button>
+</div>
+
+<!-- ═══════════════ SCREEN: HOW TO PLAY ═══════════════ -->
+<div id="s-howto" class="screen howto-screen hidden">
+  <div class="howto-header">
+    <h1 data-i18n="howto-title">📖 Cómo Jugar</h1>
+    <h2 data-i18n="howto-learn">Aprende las reglas del juego</h2>
+  </div>
+
+  <div class="howto-carousel" id="howto-carousel">
+    <!-- Slides populated by JavaScript -->
+  </div>
+
+  <div class="howto-controls">
+    <button class="howto-nav-btn" id="howto-prev" onclick="prevHowtoSlide()">←</button>
+    <div class="howto-counter"><span id="howto-counter">1 / 6</span></div>
+    <button class="howto-nav-btn" id="howto-next" onclick="nextHowtoSlide()">→</button>
+  </div>
+
+  <div class="howto-dots" id="howto-dots">
+    <!-- Dots populated by JavaScript -->
+  </div>
+
+  <div class="btn-row" style="margin-top: 28px;">
+    <button class="btn btn-ghost" onclick="showScreen('s-menu')">← <span data-i18n="back">Volver</span></button>
+  </div>
+</div>
+
+<!-- ═══════════════ SCREEN: NAMES LOCAL ═══════════════ -->
+<div id="s-names-local" class="screen hidden">
+  <h1>🎲 <span data-i18n="players">Jugadores</span></h1>
+  <h2 data-i18n="enter-names">Introduce los nombres</h2>
+
+  <div class="input-group">
+    <label data-i18n="player1">Jugador 1</label>
+    <input id="name1-local" type="text" placeholder="Nombre..." maxlength="20">
+  </div>
+  <div class="input-group">
+    <label data-i18n="player2">Jugador 2</label>
+    <input id="name2-local" type="text" placeholder="Nombre..." maxlength="20">
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-ghost" onclick="showScreen('s-menu')">← <span data-i18n="back">Volver</span></button>
+    <button class="btn btn-gold" onclick="startLocal()" data-i18n="play">Jugar</button>
+  </div>
+</div>
+
+<!-- ═══════════════ SCREEN: NAMES AI ═══════════════ -->
+<div id="s-names-ai" class="screen hidden">
+  <h1>🎲 <span data-i18n="vs-ai">vs IA</span></h1>
+  <h2 data-i18n="whats-your-name">¿Cómo te llamas?</h2>
+
+  <div class="input-group">
+    <label data-i18n="your-name">Tu nombre</label>
+    <input id="name1-ai" type="text" placeholder="Nombre..." maxlength="20">
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-ghost" onclick="showScreen('s-menu')">← <span data-i18n="back">Volver</span></button>
+    <button class="btn btn-gold" onclick="startAI()" data-i18n="play">Jugar</button>
+  </div>
+</div>
+
+<!-- ═══════════════ SCREEN: ONLINE MENU ═══════════════ -->
+<div id="s-online-menu" class="screen hidden">
+  <h1>🌐 <span data-i18n="online-title">Online</span></h1>
+  <h2 data-i18n="create-or-join">¿Crear o unirte a una sala?</h2>
+
+  <div class="input-group">
+    <label data-i18n="your-name">Tu nombre</label>
+    <input id="name-online" type="text" placeholder="Nombre..." maxlength="20">
+  </div>
+
+  <button class="menu-btn mb-online" onclick="createRoom()" style="max-width:300px; margin-top:8px;">
+    <span class="icon">🏠</span>
+    <span class="label">
+      <span data-i18n="create-room">Crear sala</span>
+      <span data-i18n="create-room-desc">Genera un código para tu amigo</span>
+    </span>
+  </button>
+
+  <div class="sep" data-i18n="or">o</div>
+
+  <div class="input-group" style="display:flex;gap:8px;align-items:flex-end;">
+    <div style="flex:1">
+      <label data-i18n="room-code">Código de sala</label>
+      <input id="join-code" type="text" placeholder="ABC123" maxlength="6" style="text-transform:uppercase;letter-spacing:4px;font-weight:700;">
+    </div>
+    <button class="btn btn-gold" onclick="joinRoom()" style="margin-bottom:0;padding:12px 18px;" data-i18n="join">Unirse</button>
+  </div>
+
+  <button class="btn btn-ghost" onclick="showScreen('s-menu')" style="margin-top:12px;">← <span data-i18n="back">Volver</span></button>
+</div>
+
+<!-- ═══════════════ SCREEN: WAITING FOR GUEST ═══════════════ -->
+<div id="s-waiting" class="screen hidden">
+  <h1>🌐 <span data-i18n="room-created">Sala creada</span></h1>
+  <div class="room-code-box">
+    <div class="code-label" data-i18n="share-code">Comparte este código con tu amigo</div>
+    <div class="code" id="display-code">------</div>
+    <button class="btn-copy" onclick="copyCode()" data-i18n="copy-code">Copiar código</button>
+  </div>
+  <p style="color:#ffffff;font-size:.9rem;margin-bottom:16px;">
+    <span data-i18n="waiting-guest">Esperando a que alguien se una</span><span class="waiting-dot">.</span><span class="waiting-dot" style="animation-delay:.3s">.</span><span class="waiting-dot" style="animation-delay:.6s">.</span>
+  </p>
+  <button class="btn btn-danger" onclick="cancelRoom()" data-i18n="cancel">Cancelar</button>
+</div>
+
+<!-- ═══════════════ SCREEN: GAME ═══════════════ -->
+<div id="s-game" class="screen hidden">
+
+  <div class="online-status hidden" id="online-status">🌐 Online</div>
+
+  <div class="scoreboard">
+    <div class="score-box">
+      <span class="score-name p1-c" id="g-name1">Jugador 1</span>
+      <span class="score-num  p1-c" id="score1">0</span>
+    </div>
+    <span class="score-of">/ 6</span>
+    <div class="score-box">
+      <span class="score-name p2-c" id="g-name2">Jugador 2</span>
+      <span class="score-num  p2-c" id="score2">0</span>
+    </div>
+  </div>
+
+  <div class="turn-badge init" id="turn-badge">
+    <span class="dot hidden" id="dot"></span>
+    <span id="turn-text">Fase de inicio</span>
+  </div>
+
+  <div class="board" id="board"></div>
+
+  <div class="cancel-row">
+    <button class="btn-deselect hidden" id="btn-deselect" onclick="cancelSplitFirst()" data-i18n="cancel-selection">✕ Cancelar selección</button>
+  </div>
+
+  <div class="legend" id="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div><span data-i18n="direct">Tomar directo</span></div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div><span data-i18n="split1">1ª carta división</span></div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div><span data-i18n="confirm">Confirmar</span></div>
+  </div>
+
+  <div class="points-pill"><span data-i18n="remaining-points">Puntos restantes:</span> <span class="points-val" id="pts-val">—</span></div>
+
+  <div class="timer-wrap hidden" id="timer-wrap">
+    <div class="timer-bar-bg"><div class="timer-bar" id="timer-bar" style="width:100%"></div></div>
+    <div class="timer-label"><span data-i18n="time">Tiempo</span><span id="timer-secs">20s</span></div>
+  </div>
+
+  <div class="dice-area">
+    <div class="dice" id="dice">?</div>
+    <div class="status" id="status">—</div>
+    <div class="btn-row">
+      <button class="btn btn-roll" id="btn-roll" onclick="onRoll()" data-i18n="roll">Tirar dado</button>
+      <button class="btn btn-ghost" onclick="backToMenu()" style="font-size:.85rem;padding:8px 14px;" data-i18n="menu">Menú</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── WINNER OVERLAY ── -->
+<div class="winner-overlay hidden" id="winner-overlay">
+  <div class="winner-box" style="border-color: rgb(89, 49, 205)">
+    <h2 id="win-title" style="color: rgb(255, 255, 255)">¡Gana!</h2>
+    <p id="win-sub" style="color: rgb(255, 255, 255)">Controló las 6 posiciones</p>
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="restartSameMode()" data-i18n="play-again" style="color: rgb(255, 255, 255)">Jugar de nuevo</button>
+      <button class="btn btn-ghost" onclick="backToMenu()" data-i18n="menu" style="border-color: rgb(255, 255, 255); color: rgb(255, 255, 255); background-color: rgb(80, 48, 172)">Menú</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// INTERNATIONALIZATION
+// ═══════════════════════════════════════════════════════════
+const i18n = {
+  es: {
+    title: 'Cartas & Dados',
+    'choose-mode': 'Elige modo de juego',
+    'local-title': 'Dos Jugadores',
+    'local-desc': 'En la misma pantalla',
+    'ai-title': 'Contra la IA',
+    'ai-desc': 'Desafía a la máquina',
+    'online-title': 'Online',
+    'online-desc': 'Juega con un amigo mediante código',
+    'howto-title': 'Cómo Jugar',
+    'howto-desc': 'Aprende las reglas',
+    'howto-learn': 'Aprende las reglas del juego',
+    'players': 'Jugadores',
+    'enter-names': 'Introduce los nombres',
+    'player1': 'Jugador 1',
+    'player2': 'Jugador 2',
+    'vs-ai': 'vs IA',
+    'whats-your-name': '¿Cómo te llamas?',
+    'your-name': 'Tu nombre',
+    'back': 'Volver',
+    'play': 'Jugar',
+    'create-or-join': '¿Crear o unirte a una sala?',
+    'create-room': 'Crear sala',
+    'create-room-desc': 'Genera un código para tu amigo',
+    'or': 'o',
+    'room-code': 'Código de sala',
+    'join': 'Unirse',
+    'room-created': 'Sala creada',
+    'share-code': 'Comparte este código con tu amigo',
+    'copy-code': 'Copiar código',
+    'waiting-guest': 'Esperando a que alguien se una',
+    'cancel': 'Cancelar',
+    'cancel-selection': '✕ Cancelar selección',
+    'direct': 'Tomar directo',
+    'split1': '1ª carta división',
+    'confirm': 'Confirmar',
+    'remaining-points': 'Puntos restantes:',
+    'time': 'Tiempo',
+    'roll': 'Tirar dado',
+    'menu': 'Menú',
+    'play-again': 'Jugar de nuevo',
+  },
+  en: {
+    title: 'Cards & Dices',
+    'choose-mode': 'Choose game mode',
+    'local-title': 'Two Players',
+    'local-desc': 'On the same screen',
+    'ai-title': 'Against AI',
+    'ai-desc': 'Challenge the machine',
+    'online-title': 'Online',
+    'online-desc': 'Play with a friend via code',
+    'howto-title': 'How to Play',
+    'howto-desc': 'Learn the rules',
+    'howto-learn': 'Learn the rules of the game',
+    'players': 'Players',
+    'enter-names': 'Enter player names',
+    'player1': 'Player 1',
+    'player2': 'Player 2',
+    'vs-ai': 'vs AI',
+    'whats-your-name': 'What is your name?',
+    'your-name': 'Your name',
+    'back': 'Back',
+    'play': 'Play',
+    'create-or-join': 'Create or join a room?',
+    'create-room': 'Create Room',
+    'create-room-desc': 'Generate a code for your friend',
+    'or': 'or',
+    'room-code': 'Room Code',
+    'join': 'Join',
+    'room-created': 'Room Created',
+    'share-code': 'Share this code with your friend',
+    'copy-code': 'Copy Code',
+    'waiting-guest': 'Waiting for someone to join',
+    'cancel': 'Cancel',
+    'cancel-selection': '✕ Cancel Selection',
+    'direct': 'Claim directly',
+    'split1': '1st card split',
+    'confirm': 'Confirm',
+    'remaining-points': 'Remaining points:',
+    'time': 'Time',
+    'roll': 'Roll Dice',
+    'menu': 'Menu',
+    'play-again': 'Play Again',
+  }
+};
+
+const howtoContent = {
+  es: [
+    {
+      icon: '🎯',
+      title: 'Objetivo del Juego',
+      content: 'Sé el primero en controlar las <strong>6 posiciones</strong> del tablero. Cada posición es una tarjeta numerada del 1 al 6.'
+    },
+    {
+      icon: '🎲',
+      title: 'Fase de Inicio',
+      content: 'Los dos jugadores tiran el dado. Quien saca el número mayor empieza el juego. Si hay empate, se repite.'
+    },
+    {
+      icon: '📋',
+      title: 'Cada Turno',
+      content: '<ol><li><strong>Tira el dado</strong> y obten un número del 1 al 6</li><li><strong>Reclama posiciones</strong> según el resultado</li><li><strong>Pasa el turno</strong> al siguiente jugador</li></ol>'
+    },
+    {
+      icon: '⭐',
+      title: 'Cómo Reclamar',
+      content: '<strong>Opción 1 - Tomar Directo (Dorado):</strong> Si la posición del número que sacaste está libre o es del oponente, puedes tomarla directamente.<br><br><strong>Opción 2 - Dividir (Morado):</strong> Si no puedes tomar directo, busca dos números que sumen el resultado del dado y que ambos estén disponibles. Reclama ambas posiciones.'
+    },
+    {
+      icon: '⏱️',
+      title: 'Límite de Tiempo',
+      content: 'Tienes <strong>20 segundos</strong> para hacer tu movimiento. Si se agota el tiempo, pierdes el turno.'
+    },
+    {
+      icon: '🏆',
+      title: 'Ganar',
+      content: 'El primer jugador en controlar las 6 posiciones gana la partida. \n¡Buena suerte!'
+    }
+  ],
+  en: [
+    {
+      icon: '🎯',
+      title: 'Game Objective',
+      content: 'Be the first to control all <strong>6 positions</strong> on the board. Each position is a card numbered 1 to 6.'
+    },
+    {
+      icon: '🎲',
+      title: 'Initialization Phase',
+      content: 'Both players roll the dice. Whoever rolls the highest number starts the game. If there\'s a tie, roll again.'
+    },
+    {
+      icon: '📋',
+      title: 'Each Turn',
+      content: '<ol><li><strong>Roll the dice</strong> to get a number from 1 to 6</li><li><strong>Claim positions</strong> based on the result</li><li><strong>Pass the turn</strong> to the next player</li></ol>'
+    },
+    {
+      icon: '⭐',
+      title: 'How to Claim',
+      content: '<strong>Option 1 - Claim Directly (Gold):</strong> If the position of the number you rolled is free or belongs to your opponent, you can claim it directly.<br><br><strong>Option 2 - Split (Purple):</strong> If you can\'t claim directly, find two numbers that add up to your dice result and that both are available. Claim both positions.'
+    },
+    {
+      icon: '⏱️',
+      title: 'Time Limit',
+      content: 'You have <strong>20 seconds</strong> to make your move. If time runs out, you forfeit your turn.'
+    },
+    {
+      icon: '🏆',
+      title: 'Winning',
+      content: 'The first player to control all 6 positions wins the game. Good luck!'
+    }
+  ]
+};
+
+let currentLang = localStorage.getItem('cardsDicesLang') || 'es';
+
+function setLanguage(lang) {
+  currentLang = lang;
+  localStorage.setItem('cardsDicesLang', lang);
+  document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.lang === lang));
+  updateUI();
+}
+
+function updateUI() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    el.textContent = i18n[currentLang][key] || key;
+  });
+  
+  // Update How to Play carousel
+  const carouselContainer = document.getElementById('howto-carousel');
+  const dotsContainer = document.getElementById('howto-dots');
+  if (carouselContainer && dotsContainer) {
+    const content = howtoContent[currentLang];
+    carouselContainer.innerHTML = content.map((section, idx) => `
+      <div class="howto-slide ${idx === 0 ? 'active' : ''}">
+        <h3><span>${section.icon}</span> ${section.title}</h3>
+        <p>${section.content}</p>
+      </div>
+    `).join('');
+    
+    dotsContainer.innerHTML = content.map((_, idx) => `
+      <div class="howto-dot ${idx === 0 ? 'active' : ''}" onclick="goToHowtoSlide(${idx})"></div>
+    `).join('');
+    
+    currentHowtoSlide = 0;
+  }
+  
+  updateHowtoControls();
+}
+
+let currentHowtoSlide = 0;
+
+function updateHowtoControls() {
+  const slides = document.querySelectorAll('.howto-slide');
+  const total = slides.length;
+  
+  document.getElementById('howto-counter').textContent = `${currentHowtoSlide + 1} / ${total}`;
+  document.getElementById('howto-prev').disabled = currentHowtoSlide === 0;
+  document.getElementById('howto-next').disabled = currentHowtoSlide === total - 1;
+}
+
+function goToHowtoSlide(idx) {
+  const slides = document.querySelectorAll('.howto-slide');
+  const dots = document.querySelectorAll('.howto-dot');
+  
+  slides.forEach(s => s.classList.remove('active'));
+  dots.forEach(d => d.classList.remove('active'));
+  
+  slides[idx].classList.add('active');
+  dots[idx].classList.add('active');
+  
+  currentHowtoSlide = idx;
+  updateHowtoControls();
+}
+
+function nextHowtoSlide() {
+  const slides = document.querySelectorAll('.howto-slide');
+  if (currentHowtoSlide < slides.length - 1) {
+    goToHowtoSlide(currentHowtoSlide + 1);
+  }
+}
+
+function prevHowtoSlide() {
+  if (currentHowtoSlide > 0) {
+    goToHowtoSlide(currentHowtoSlide - 1);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// FIREBASE CONFIG
+// ═══════════════════════════════════════════════════════════
+const FB_CONFIG = {
+  apiKey: "AIzaSyBVac0bqMASc0gAXIH3UnPAGf21yyCxlYk",
+  authDomain: "juegos-navegador.firebaseapp.com",
+  databaseURL: "https://juegos-navegador-default-rtdb.firebaseio.com",
+  projectId: "juegos-navegador",
+  storageBucket: "juegos-navegador.firebasestorage.app",
+  messagingSenderId: "763967469197",
+  appId: "1:763967469197:web:f30addb5902b34ece7d4c4"
+};
+const FB_READY = !!FB_CONFIG.apiKey;
+let   fbDB = null;
+
+if (FB_READY) {
+  firebase.initializeApp(FB_CONFIG);
+  fbDB = firebase.database();
+}
+
+// ═══════════════════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════════════════
+const DICE_ICONS   = ['⚀','⚁','⚂','⚃','⚄','⚅'];
+const TURN_SECONDS = 20;
+
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+const G = {
+  mode:       'local',
+  names:      ['Jugador 1','Jugador 2'],
+  myNum:      1,
+  roomCode:   null,
+  roomRef:    null,
+  roomUnsub:  null,
+  phase:       'init',
+  initStep:    1,
+  initRolls:   [null, null],
+  current:     1,
+  positions:   Array(6).fill(0),
+  diceVal:     null,
+  waiting:     false,
+  canDirect:   false,
+  validSplits: [],
+  splitFirst:  null,
+  timerSecs:   0,
+  timerHandle: null,
+};
+
+// ═══════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  const screen = document.getElementById(id);
+  screen.classList.remove('hidden');
+  // Force reflow to ensure transition plays
+  void screen.offsetWidth;
+}
+
+function backToMenu() {
+  stopTimer();
+  cleanupOnline();
+  showEl('winner-overlay', false);
+  showScreen('s-menu');
+}
+
+// ═══════════════════════════════════════════════════════════
+// GAME START MODES
+// ═══════════════════════════════════════════════════════════
+function startLocal() {
+  G.mode    = 'local';
+  G.names   = [
+    ($id('name1-local').value.trim() || i18n[currentLang]['player1']),
+    ($id('name2-local').value.trim() || i18n[currentLang]['player2']),
+  ];
+  initGame();
+}
+
+function startAI() {
+  G.mode    = 'ai';
+  G.names   = [
+    ($id('name1-ai').value.trim() || i18n[currentLang]['player1']),
+    'IA 🤖',
+  ];
+  initGame();
+}
+
+function restartSameMode() {
+  showEl('winner-overlay', false);
+  if      (G.mode === 'local')  initGame();
+  else if (G.mode === 'ai')     initGame();
+  else                          backToMenu();
+}
+
+// ═══════════════════════════════════════════════════════════
+// ONLINE – CREATE / JOIN
+// ═══════════════════════════════════════════════════════════
+function createRoom() {
+  if (!FB_READY) {
+    alert(currentLang === 'es' ? 'Configura Firebase en el archivo HTML para usar el modo online.' : 'Configure Firebase in the HTML file to use online mode.');
+    return;
+  }
+  const name = $id('name-online').value.trim() || i18n[currentLang]['player1'];
+  const code = genCode();
+
+  G.mode    = 'online';
+  G.myNum   = 1;
+  G.names   = [name, '?'];
+  G.roomCode = code;
+
+  const roomRef = fbDB.ref('rooms/' + code);
+  G.roomRef = roomRef;
+
+  roomRef.set({
+    host: name, guest: null, status: 'waiting',
+    state: defaultOnlineState()
+  });
+
+  $id('display-code').textContent = code;
+  showScreen('s-waiting');
+
+  G.roomUnsub = roomRef.child('guest').on('value', snap => {
+    const guest = snap.val();
+    if (guest) {
+      G.names[1] = guest;
+      roomRef.child('guest').off('value');
+      G.roomUnsub = null;
+      startOnline();
+    }
+  });
+}
+
+function joinRoom() {
+  if (!FB_READY) {
+    alert(currentLang === 'es' ? 'Configura Firebase en el archivo HTML para usar el modo online.' : 'Configure Firebase in the HTML file to use online mode.');
+    return;
+  }
+  const name = $id('name-online').value.trim() || i18n[currentLang]['player2'];
+  const code = ($id('join-code').value.trim()).toUpperCase();
+  if (code.length < 4) {
+    alert(currentLang === 'es' ? 'Introduce un código válido.' : 'Enter a valid code.');
+    return;
+  }
+
+  const roomRef = fbDB.ref('rooms/' + code);
+  roomRef.once('value', snap => {
+    const data = snap.val();
+    if (!data) {
+      alert(currentLang === 'es' ? 'Sala no encontrada. Revisa el código.' : 'Room not found. Check the code.');
+      return;
+    }
+    if (data.status !== 'waiting') {
+      alert(currentLang === 'es' ? 'Esta sala ya está en uso.' : 'This room is already in use.');
+      return;
+    }
+
+    G.mode    = 'online';
+    G.myNum   = 2;
+    G.names   = [data.host, name];
+    G.roomCode = code;
+    G.roomRef  = roomRef;
+
+    roomRef.child('guest').set(name);
+    loadOnlineState(data.state);
+    startOnline();
+  });
+}
+
+function cancelRoom() {
+  if (G.roomRef) G.roomRef.remove();
+  cleanupOnline();
+  showScreen('s-online-menu');
+}
+
+function defaultOnlineState() {
+  return { phase:'init', initStep:1, initRolls:[null,null], current:1, positions:[0,0,0,0,0,0], diceVal:null, move:null };
+}
+
+function startOnline() {
+  G.roomUnsub = G.roomRef.child('state').on('value', snap => {
+    const st = snap.val();
+    if (!st) return;
+    if (st.move && st.move.by !== G.myNum) applyOnlineMove(st);
+  });
+
+  initGame();
+}
+
+function cleanupOnline() {
+  if (G.roomRef && G.roomUnsub) {
+    G.roomRef.child('state').off('value');
+    G.roomUnsub = null;
+  }
+  G.roomRef  = null;
+  G.roomCode = null;
+}
+
+function applyOnlineMove(st) {
+  G.positions  = st.positions || G.positions;
+  G.current    = st.current;
+  G.phase      = st.phase;
+  G.initStep   = st.initStep;
+  G.initRolls  = st.initRolls || G.initRolls;
+
+  const mv = st.move;
+  if (!mv) return;
+
+  if (mv.type === 'roll') {
+    stopTimer();
+    G.diceVal = mv.val;
+    animateDice(mv.val, () => {
+      if (G.phase === 'init') handleInitRoll(mv.val);
+      else                    handlePlayRoll(mv.val);
+    });
+  } else if (mv.type === 'claim') {
+    renderBoard();
+    const p1 = G.positions.filter(p=>p===1).length, p2 = G.positions.filter(p=>p===2).length;
+    if (p1===6 || p2===6) { endGame(p1===6?1:2); return; }
+    G.current = G.myNum;
+    setTurnBadge(G.current);
+    setTimeout(() => { setPointsPill(null); setStatus(getStatusMessage('your-turn', {name: G.names[G.current-1]})); $id('btn-roll').disabled = false; }, 600);
+  } else if (mv.type === 'skip') {
+    G.current = G.myNum;
+    setTurnBadge(G.current);
+    setTimeout(() => { setPointsPill(null); setStatus(getStatusMessage('your-turn', {name: G.names[G.current-1]})); $id('btn-roll').disabled = false; }, 800);
+  }
+}
+
+function pushOnlineState(moveObj) {
+  if (!G.roomRef) return;
+  G.roomRef.child('state').set({
+    phase: G.phase, initStep: G.initStep,
+    initRolls: G.initRolls, current: G.current,
+    positions: G.positions, diceVal: G.diceVal,
+    move: { ...moveObj, by: G.myNum }
+  });
+}
+
+function loadOnlineState(st) {
+  if (!st) return;
+  G.phase = st.phase; G.initStep = st.initStep;
+  G.initRolls = st.initRolls || [null,null];
+  G.current = st.current; G.positions = st.positions || Array(6).fill(0);
+  G.diceVal = st.diceVal;
+}
+
+function genCode() {
+  const ch = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({length:6}, () => ch[Math.floor(Math.random()*ch.length)]).join('');
+}
+
+function copyCode() {
+  navigator.clipboard.writeText(G.roomCode).catch(()=>{});
+  const btn = document.querySelector('.btn-copy');
+  const origText = btn.textContent;
+  btn.textContent = currentLang === 'es' ? '¡Copiado!' : 'Copied!';
+  setTimeout(() => btn.textContent = origText, 2000);
+}
+
+// ═══════════════════════════════════════════════════════════
+// STATUS MESSAGES (Multi-language)
+// ═══════════════════════════════════════════════════════════
+const statusMessages = {
+  es: {
+    'your-turn': (name) => `${name}: tira el dado.`,
+    'p2-turn': (p1, p2) => `${p1} sacó ${G.initRolls[0]}. Ahora tira ${p2}.`,
+    'tie': (val) => `¡Empate ${val} vs ${val}! Repiten. Tira ${G.names[0]}.`,
+    'winner': (p1, p2, winner) => `${p1}: ${p2} — ${p2}: ${p1} → ¡Empieza ${winner}!`,
+    'no-move': (name, val) => `${name} sacó ${val}. Posición ya tomada y sin divisiones válidas. ¡Se pasa el turno!`,
+    'roll-options': (name, val) => `${name} sacó ${val} pts. Carta dorada = directa. Cartas moradas = dividir.`,
+    'roll-direct': (name, val) => `${name} sacó ${val} pts. Toca la carta ${val}.`,
+    'roll-split': (name, val) => `${name} sacó ${val} pts. La posición ${val} ya es tuya — elige cómo dividir.`,
+    'select-split': (pos) => `Carta ${pos} seleccionada. Elige la carta complementaria.`,
+    'timeout': (name) => `¡Tiempo agotado! Se pasa el turno a ${name}.`,
+    'time-expired': () => 'Tiempo agotado. Se pasa el turno...',
+  },
+  en: {
+    'your-turn': (name) => `${name}: roll the dice.`,
+    'p2-turn': (p1, p2) => `${p1} rolled ${G.initRolls[0]}. Now ${p2} rolls.`,
+    'tie': (val) => `Tie ${val} vs ${val}! Roll again. ${G.names[0]} rolls.`,
+    'winner': (p1, p2, winner) => `${p1}: ${p2} — ${p2}: ${p1} → ${winner} starts!`,
+    'no-move': (name, val) => `${name} rolled ${val}. Position already taken with no valid splits. Turn passes!`,
+    'roll-options': (name, val) => `${name} rolled ${val} pts. Gold card = direct. Purple cards = split.`,
+    'roll-direct': (name, val) => `${name} rolled ${val} pts. Click card ${val}.`,
+    'roll-split': (name, val) => `${name} rolled ${val} pts. Position ${val} is yours — choose how to split.`,
+    'select-split': (pos) => `Card ${pos} selected. Choose the companion card.`,
+    'timeout': (name) => `Time expired! Turn passes to ${name}.`,
+    'time-expired': () => 'Time expired. Passing turn...',
+  }
+};
+
+function getStatusMessage(key, context = {}) {
+  const msgs = statusMessages[currentLang];
+  const fn = msgs[key];
+  if (typeof fn === 'function') return fn(context.name, context.val);
+  return fn;
+}
+
+// ═══════════════════════════════════════════════════════════
+// GAME INIT
+// ═══════════════════════════════════════════════════════════
+function initGame() {
+  Object.assign(G, {
+    phase:'init', initStep:1, initRolls:[null,null],
+    current:1, positions:Array(6).fill(0),
+    diceVal:null, waiting:false,
+    canDirect:false, validSplits:[], splitFirst:null,
+    timerSecs:0, timerHandle:null,
+  });
+
+  $id('g-name1').textContent = G.names[0];
+  $id('g-name2').textContent = G.names[1];
+  $id('dice').textContent = '?';
+  $id('dice').classList.remove('active');
+  $id('btn-roll').disabled = false;
+  showEl('btn-deselect', false);
+  showEl('winner-overlay', false);
+  showEl('online-status', G.mode === 'online');
+  $id('legend').classList.remove('show');
+  setTurnBadge(null);
+  setPointsPill(null);
+
+  if (G.mode === 'online') {
+    $id('online-status').textContent = `🌐 ${currentLang === 'es' ? 'Sala' : 'Room'}: ${G.roomCode} — ${currentLang === 'es' ? 'Jugando como' : 'Playing as'} Player ${G.myNum}`;
+  }
+
+  const initMsg = currentLang === 'es' 
+    ? `${G.names[0]}: tira el dado para determinar quién empieza`
+    : `${G.names[0]}: roll the dice to determine who starts`;
+  setStatus(initMsg);
+  renderBoard();
+  showScreen('s-game');
+}
+
+// ═══════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════
+function $id(id) { return document.getElementById(id); }
+function setStatus(msg) { $id('status').textContent = msg; }
+function showEl(id, show) { $id(id).classList.toggle('hidden', !show); }
+
+function allSplits(n) {
+  const seen = new Set(), opts = [];
+  for (let a = 1; a <= 6 && a < n; a++) {
+    const b = n - a;
+    if (b >= 1 && b <= 6 && a !== b) {
+      const key = [Math.min(a,b), Math.max(a,b)].join(',');
+      if (!seen.has(key)) { seen.add(key); opts.push([a, b]); }
+    }
+  }
+  return opts;
+}
+
+function isClaimable(pos) { return pos >= 1 && pos <= 6 && G.positions[pos-1] !== G.current; }
+function getValidSplits(n) { return allSplits(n).filter(([a,b]) => isClaimable(a) && isClaimable(b)); }
+
+function splitEligible() {
+  const s = new Set();
+  for (const [a,b] of G.validSplits) { s.add(a); s.add(b); }
+  return s;
+}
+function companions(first) {
+  const s = new Set();
+  for (const [a,b] of G.validSplits) { if(a===first)s.add(b); if(b===first)s.add(a); }
+  return s;
+}
+
+function setTurnBadge(player) {
+  const badge=$id('turn-badge'), dot=$id('dot'), text=$id('turn-text');
+  badge.className = 'turn-badge';
+  dot.classList.remove('hidden');
+  if (player===1) {
+    badge.classList.add('p1');
+    text.textContent = `${currentLang === 'es' ? 'Turno' : 'Turn'}: ${G.names[0]}`;
+  } else if (player===2) {
+    badge.classList.add('p2');
+    text.textContent = `${currentLang === 'es' ? 'Turno' : 'Turn'}: ${G.names[1]}`;
+  } else {
+    badge.classList.add('init');
+    dot.classList.add('hidden');
+    text.textContent = currentLang === 'es' ? 'Fase de inicio' : 'Initialization Phase';
+  }
+}
+
+function setPointsPill(pts) { $id('pts-val').textContent = pts===null ? '—' : pts; }
+
+function isMyTurn() {
+  if (G.phase === 'init') {
+    if (G.mode === 'ai')     return G.initStep === 1;
+    if (G.mode === 'online') return G.initStep === G.myNum;
+    return true;
+  }
+  if (G.mode === 'ai')     return G.current === 1;
+  if (G.mode === 'online') return G.current === G.myNum;
+  return true;
+}
+
+// ═══════════════════════════════════════════════════════════
+// BOARD RENDER
+// ═══════════════════════════════════════════════════════════
+function renderBoard() {
+  const board = $id('board');
+  board.innerHTML = '';
+  const eligible = G.waiting ? splitEligible() : new Set();
+  const compSet  = (G.waiting && G.splitFirst!==null) ? companions(G.splitFirst) : new Set();
+
+  for (let i = 1; i <= 6; i++) {
+    const owner = G.positions[i-1];
+    const card  = document.createElement('div');
+    card.className = 'card';
+    if (owner===1)      card.classList.add('p1-owned');
+    else if (owner===2) card.classList.add('p2-owned');
+    else                card.classList.add('neutral');
+
+    let clickable = false;
+    if (G.waiting && isMyTurn()) {
+      if (G.splitFirst===null) {
+        if (G.canDirect && i===G.diceVal)  { card.classList.add('c-direct');    clickable=true; }
+        else if (eligible.has(i))           { card.classList.add('c-split');     clickable=true; }
+      } else {
+        if (i===G.splitFirst)               { card.classList.add('c-selected');  clickable=true; }
+        else if (compSet.has(i))            { card.classList.add('c-companion'); clickable=true; }
+      }
+    }
+
+    const lbl = owner===1 ? G.names[0].substring(0,4) : owner===2 ? G.names[1].substring(0,4) : '';
+    card.innerHTML = `<span>${i}</span><span class="card-label">${lbl}</span>`;
+    if (clickable) card.onclick = () => onCardClick(i);
+    board.appendChild(card);
+  }
+
+  $id('score1').textContent = G.positions.filter(p=>p===1).length;
+  $id('score2').textContent = G.positions.filter(p=>p===2).length;
+}
+
+// ═══════════════════════════════════════════════════════════
+// CARD CLICK
+// ═══════════════════════════════════════════════════════════
+function onCardClick(i) {
+  if (!G.waiting || !isMyTurn()) return;
+  if (G.splitFirst===null) {
+    if (G.canDirect && i===G.diceVal) { claimSingle(i); return; }
+    G.splitFirst = i;
+    const comp = companions(i);
+    if (comp.size===1 && comp.has(i)) { claimTwo(i,i); return; }
+    renderBoard();
+    showEl('btn-deselect', true);
+    setStatus(getStatusMessage('select-split', {name: i}));
+  } else {
+    if (i===G.splitFirst) { cancelSplitFirst(); return; }
+    if (companions(G.splitFirst).has(i)) claimTwo(G.splitFirst, i);
+  }
+}
+
+function cancelSplitFirst() {
+  G.splitFirst = null;
+  showEl('btn-deselect', false);
+  renderBoard();
+  setStatusForCurrentRoll();
+}
+
+function setStatusForCurrentRoll() {
+  const v = G.diceVal, n = G.names[G.current-1];
+  if (G.canDirect && G.validSplits.length>0)
+    setStatus(getStatusMessage('roll-options', {name: n, val: v}));
+  else if (G.canDirect)
+    setStatus(getStatusMessage('roll-direct', {name: n, val: v}));
+  else
+    setStatus(getStatusMessage('roll-split', {name: n, val: v}));
+}
+
+// ═══════════════════════════════════════════════════════════
+// TIMER
+// ═══════════════════════════════════════════════════════════
+function startTimer() {
+  if (!isMyTurn()) return;
+  stopTimer();
+  G.timerSecs = TURN_SECONDS;
+  showEl('timer-wrap', true);
+  updateTimerBar();
+  G.timerHandle = setInterval(() => {
+    G.timerSecs--;
+    updateTimerBar();
+    if (G.timerSecs<=0) onTimerExpired();
+  }, 1000);
+}
+
+function stopTimer() {
+  clearInterval(G.timerHandle);
+  G.timerHandle = null;
+  showEl('timer-wrap', false);
+}
+
+function updateTimerBar() {
+  const pct = (G.timerSecs/TURN_SECONDS)*100;
+  const bar = $id('timer-bar');
+  bar.style.width = pct+'%';
+  bar.className = 'timer-bar';
+  if (pct<=20) bar.classList.add('crit');
+  else if (pct<=50) bar.classList.add('warn');
+  const secsEl = $id('timer-secs');
+  secsEl.textContent = G.timerSecs+'s';
+  secsEl.classList.toggle('urgent', G.timerSecs<=10);
+}
+
+function onTimerExpired() {
+  stopTimer();
+  if (!G.waiting) return;
+  G.waiting=false;
+  G.splitFirst=null;
+  showEl('btn-deselect',false);
+  $id('legend').classList.remove('show');
+  $id('dice').classList.remove('active');
+  setPointsPill(null);
+  const nextPlayer = G.current===1 ? G.names[1] : G.names[0];
+  setStatus(getStatusMessage('timeout', {name: nextPlayer}));
+  if (G.mode==='online') pushOnlineState({type:'skip'});
+  setTimeout(passTurn, 1800);
+}
+
+// ═══════════════════════════════════════════════════════════
+// DICE
+// ═══════════════════════════════════════════════════════════
+function animateDice(finalVal, cb) {
+  const el=$id('dice');
+  el.classList.remove('active');
+  el.classList.add('rolling');
+  let ticks=0;
+  const iv=setInterval(()=>{
+    el.textContent=DICE_ICONS[Math.floor(Math.random()*6)];
+    if(++ticks>=10){
+      clearInterval(iv);
+      el.classList.remove('rolling');
+      el.textContent=DICE_ICONS[finalVal-1];
+      cb();
+    }
+  },65);
+}
+
+// ═══════════════════════════════════════════════════════════
+// ROLL
+// ═══════════════════════════════════════════════════════════
+function onRoll() {
+  if (!isMyTurn()) return;
+  $id('btn-roll').disabled=true;
+  setPointsPill(null);
+  const val=Math.floor(Math.random()*6)+1;
+  G.diceVal=val;
+
+  if (G.mode==='online') pushOnlineState({type:'roll', val});
+
+  animateDice(val, ()=>{
+    if (G.phase==='init') handleInitRoll(val);
+    else                  handlePlayRoll(val);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT PHASE
+// ═══════════════════════════════════════════════════════════
+function handleInitRoll(val) {
+  if (G.initStep===1) {
+    G.initRolls[0]=val;
+    setStatus(getStatusMessage('p2-turn', {name: G.names[1]}));
+    G.initStep=2;
+
+    if (G.mode==='ai') { setTimeout(aiInitRoll, 900); }
+    else if (G.mode==='local' || (G.mode==='online' && G.myNum===2)) {
+      $id('btn-roll').disabled=false;
+    }
+    return;
+  }
+  G.initRolls[1]=val;
+  const r1=G.initRolls[0], r2=G.initRolls[1];
+  if (r1===r2) {
+    const msg = currentLang === 'es'
+      ? `¡Empate ${r1} vs ${r2}! Repiten. Tira ${G.names[0]}.`
+      : `Tie ${r1} vs ${r2}! Roll again. ${G.names[0]} rolls.`;
+    setStatus(msg);
+    G.initRolls=[null,null];
+    G.initStep=1;
+    if (G.mode==='ai' || G.mode==='local') $id('btn-roll').disabled=false;
+    else if (G.mode==='online' && G.myNum===1) $id('btn-roll').disabled=false;
+    return;
+  }
+  const starter=r1>r2?1:2;
+  G.current=starter;
+  G.phase='play';
+  const msg = currentLang === 'es'
+    ? `${G.names[0]}: ${r1} — ${G.names[1]}: ${r2} → ¡Empieza ${G.names[starter-1]}!`
+    : `${G.names[0]}: ${r1} — ${G.names[1]}: ${r2} → ${G.names[starter-1]} starts!`;
+  setStatus(msg);
+  setTurnBadge(starter);
+
+  setTimeout(()=>{
+    setStatus(getStatusMessage('your-turn', {name: G.names[starter-1]}));
+    if (isMyTurn()) $id('btn-roll').disabled=false;
+    if (G.mode==='ai' && starter===2) aiTakeTurn();
+  }, 1800);
+}
+
+// ═══════════════════════════════════════════════════════════
+// PLAY PHASE
+// ═══════════════════════════════════════════════════════════
+function handlePlayRoll(val) {
+  G.canDirect   = isClaimable(val);
+  G.validSplits = getValidSplits(val);
+  G.splitFirst  = null;
+  showEl('btn-deselect',false);
+  const hasMove = G.canDirect || G.validSplits.length>0;
+  setPointsPill(val);
+
+  if (!hasMove) {
+    const n=G.names[G.current-1];
+    const msg = currentLang === 'es'
+      ? `${n} sacó ${val}. Posición ya tomada y sin divisiones válidas. ¡Se pasa el turno!`
+      : `${n} rolled ${val}. Position already taken with no valid splits. Turn passes!`;
+    setStatus(msg);
+    G.waiting=false;
+    $id('legend').classList.remove('show');
+    $id('dice').classList.remove('active');
+    if (G.mode==='online') pushOnlineState({type:'skip'});
+    setTimeout(passTurn, 2200);
+    return;
+  }
+
+  G.waiting=true;
+  $id('dice').classList.add('active');
+  $id('legend').classList.add('show');
+  renderBoard();
+  setStatusForCurrentRoll();
+
+  if (isMyTurn()) startTimer();
+}
+
+// ═══════════════════════════════════════════════════════════
+// CLAIMING
+// ═══════════════════════════════════════════════════════════
+function claimSingle(pos) {
+  if (!G.waiting) return;
+  stopTimer();
+  G.positions[pos-1]=G.current;
+  if (G.mode==='online') pushOnlineState({type:'claim', positions:[pos]});
+  finishTurn();
+}
+
+function claimTwo(a,b) {
+  stopTimer();
+  if(a>=1&&a<=6) G.positions[a-1]=G.current;
+  if(b>=1&&b<=6) G.positions[b-1]=G.current;
+  if (G.mode==='online') pushOnlineState({type:'claim', positions:[a,b]});
+  finishTurn();
+}
+
+function finishTurn() {
+  G.waiting=false;
+  G.splitFirst=null;
+  showEl('btn-deselect',false);
+  $id('legend').classList.remove('show');
+  setPointsPill(0);
+  $id('dice').classList.remove('active');
+  afterClaim();
+}
+
+function afterClaim() {
+  renderBoard();
+  const p1=G.positions.filter(p=>p===1).length, p2=G.positions.filter(p=>p===2).length;
+  if (p1===6||p2===6) { endGame(p1===6?1:2); return; }
+
+  G.current=G.current===1?2:1;
+  setTurnBadge(G.current);
+
+  setTimeout(()=>{
+    setPointsPill(null);
+    setStatus(getStatusMessage('your-turn', {name: G.names[G.current-1]}));
+    if (isMyTurn()) $id('btn-roll').disabled=false;
+    if (G.mode==='ai' && G.current===2) aiTakeTurn();
+  }, 600);
+}
+
+function passTurn() {
+  G.current=G.current===1?2:1;
+  setTurnBadge(G.current);
+  setPointsPill(null);
+  setStatus(getStatusMessage('your-turn', {name: G.names[G.current-1]}));
+  if (isMyTurn()) $id('btn-roll').disabled=false;
+  if (G.mode==='ai' && G.current===2) aiTakeTurn();
+}
+
+// ═══════════════════════════════════════════════════════════
+// AI
+// ═══════════════════════════════════════════════════════════
+function aiInitRoll() {
+  const val=Math.floor(Math.random()*6)+1;
+  G.diceVal=val;
+  animateDice(val, ()=>handleInitRoll(val));
+}
+
+function aiTakeTurn() {
+  setTimeout(()=>{
+    const val=Math.floor(Math.random()*6)+1;
+    G.diceVal=val;
+    animateDice(val, ()=>{
+      G.canDirect=isClaimable(val);
+      G.validSplits=getValidSplits(val);
+      const hasMove=G.canDirect||G.validSplits.length>0;
+      setPointsPill(val);
+
+      if (!hasMove) {
+        const msg = currentLang === 'es'
+          ? `${G.names[1]} sacó ${val}. Sin movimientos. Pasa el turno.`
+          : `${G.names[1]} rolled ${val}. No moves. Turn passes.`;
+        setStatus(msg);
+        G.waiting=false;
+        $id('legend').classList.remove('show');
+        setTimeout(passTurn, 1800);
+        return;
+      }
+
+      const move=aiChoose();
+      const msgAI = currentLang === 'es' ? `${G.names[1]} sacó ${val} pts…` : `${G.names[1]} rolled ${val} pts…`;
+      setStatus(msgAI);
+      $id('legend').classList.add('show');
+
+      setTimeout(()=>{
+        $id('legend').classList.remove('show');
+        if (move.type==='single') claimSingle(move.pos);
+        else claimTwo(move.a, move.b);
+      }, 1200);
+    });
+  }, 700);
+}
+
+function aiChoose() {
+  function score(pos) {
+    const o=G.positions[pos-1];
+    if (o===0)             return 1;
+    if (o===G.current)     return -9;
+    return 3;
+  }
+
+  let best=-Infinity, move=null;
+
+  if (G.canDirect) {
+    const s=score(G.diceVal);
+    if (s>best) { best=s; move={type:'single',pos:G.diceVal}; }
+  }
+
+  for (const [a,b] of G.validSplits) {
+    const s=score(a)+score(b);
+    if (s>best) { best=s; move={type:'split',a,b}; }
+  }
+
+  return move || {type:'single',pos:G.diceVal};
+}
+
+// ═══════════════════════════════════════════════════════════
+// GAME OVER
+// ═══════════════════════════════════════════════════════════
+function endGame(winner) {
+  G.phase='over';
+  stopTimer();
+  const trophy = currentLang === 'es' ? '🏆' : '🏆';
+  $id('win-title').textContent=`¡${G.names[winner-1]} ${currentLang === 'es' ? 'gana!' : 'wins!'} ${trophy}`;
+  const msg = currentLang === 'es'
+    ? 'Controló las 6 posiciones del tablero'
+    : 'Controlled all 6 board positions';
+  $id('win-sub').textContent=msg;
+  showEl('winner-overlay',true);
+  if (G.mode==='online') cleanupOnline();
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+updateUI();
+renderBoard();
+setLanguage(currentLang);
+</script>
+</body>
+</html>
