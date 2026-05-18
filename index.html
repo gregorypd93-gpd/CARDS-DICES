@@ -986,6 +986,7 @@ function aiTakeTurn() {
         return;
       }
 
+      G.waiting=true; // required so claimSingle/claimTwo don't bail out early
       const move=aiChoose();
       setStatus(`${G.names[1]} sacó ${val} pts…`);
       $id('legend').classList.add('show');
