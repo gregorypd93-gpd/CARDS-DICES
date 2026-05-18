@@ -973,8 +973,8 @@
     }
     .hand-cards {
       position: relative;
-      width: 64px;
-      height: 108px;
+      width: 86px;
+      height: 150px;
       pointer-events: none;
       display: flex;
       flex-direction: column-reverse;
@@ -983,25 +983,25 @@
       position: absolute;
       left: 4px;
       top: 0;
-      width: 56px;
-      height: 78px;
-      border-radius: 10px;
+      width: 78px;
+      height: 108px;
+      border-radius: 12px;
       border: 1.5px solid transparent;
       font-family: 'Poppins', sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 3px;
-      padding: 6px 4px;
+      gap: 5px;
+      padding: 8px 6px;
       transform-origin: bottom center;
       transition: transform .25s, box-shadow .25s, opacity .25s;
       backdrop-filter: blur(12px);
       cursor: pointer;
       pointer-events: all;
     }
-    .hand-card .fan-icon { font-size: 1.5rem; line-height: 1; }
-    .hand-card .fan-name { font-size: .5rem; font-weight: 700; text-align: center; letter-spacing: .5px; }
+    .hand-card .fan-icon { font-size: 2rem; line-height: 1; }
+    .hand-card .fan-name { font-size: .65rem; font-weight: 700; text-align: center; letter-spacing: .5px; }
     .hand-card:hover:not(:disabled) {
       transform: rotate(var(--rot,0deg)) translateY(-20px) scale(1.12) !important;
       z-index: 30 !important;
@@ -2431,7 +2431,8 @@ function afterClaim() {
   setTimeout(()=>{
     setPointsPill(null);
     setStatus(getStatusMessage('your-turn', {name: G.names[G.current-1]}));
-    if (isMyTurn()) { $id('btn-roll').disabled=false; renderHand(); }
+    renderHand();
+    if (isMyTurn()) { $id('btn-roll').disabled=false; }
     if (G.mode==='ai' && G.current===2) aiTakeTurn();
   }, 600);
 }
@@ -2448,7 +2449,8 @@ function passTurn() {
   setTurnBadge(G.current);
   setPointsPill(null);
   setStatus(getStatusMessage('your-turn', {name: G.names[G.current-1]}));
-  if (isMyTurn()) { $id('btn-roll').disabled=false; renderHand(); }
+  renderHand();
+  if (isMyTurn()) { $id('btn-roll').disabled=false; }
   if (G.mode==='ai' && G.current===2) aiTakeTurn();
 }
 
