@@ -1993,6 +1993,7 @@ function aiTakeTurn() {
         return;
       }
 
+      G.waiting=true; // required so claimSingle/claimTwo don't bail out early
       const move=aiChoose();
       const msgAI = currentLang === 'es' ? `${G.names[1]} sacó ${val} pts…` : `${G.names[1]} rolled ${val} pts…`;
       setStatus(msgAI);
