@@ -848,6 +848,7 @@
       box-shadow: 0 8px 24px rgba(0, 0, 0, .6), inset 0 2px 4px rgba(255, 255, 255, .4);
       user-select: none;
       transition: all .3s;
+      overflow: hidden;
     }
     .dice.active {
       box-shadow: 0 0 32px rgba(255, 215, 0, .6), 0 8px 24px rgba(0, 0, 0, .5);
@@ -948,6 +949,10 @@
       animation: float .8s ease-in-out infinite alternate;
     }
     .card.c-steal-target:hover, .card.c-block-target:hover { transform: translateY(-12px); }
+
+    /* ── BOARD CARD IMAGES ── */
+    .card.has-img { background: transparent !important; overflow: hidden; padding: 0; display: block; }
+    .card.has-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
     /* ── SPECIAL CARDS FAN (izquierda del tablero) ── */
     .hand-section {
@@ -1091,6 +1096,23 @@
   </style>
 </head>
 <body>
+
+<!-- ── GAME NAV (top-left) ── -->
+<a href="Guess it.html" style="
+  position:fixed;top:16px;left:16px;z-index:50;
+  background:rgba(255,255,255,.1);
+  border:1px solid rgba(255,255,255,.2);
+  color:#ffffff;
+  padding:7px 14px;
+  border-radius:8px;
+  font-size:.75rem;font-weight:600;
+  cursor:pointer;text-decoration:none;
+  font-family:'Poppins',sans-serif;
+  transition:all .2s;
+" onmouseover="this.style.borderColor='#ffd700';this.style.color='#ffd700';"
+   onmouseout="this.style.borderColor='rgba(255,255,255,.2)';this.style.color='#ffffff';">
+  🔢 Guess It!
+</a>
 
 <!-- ── LANGUAGE TOGGLE ── -->
 <div class="lang-toggle">
@@ -2116,8 +2138,14 @@ function renderBoard() {
       }
     }
 
-    const lbl = owner===1 ? G.names[0].substring(0,4) : owner===2 ? G.names[1].substring(0,4) : '';
-    card.innerHTML = `<span>${i}</span><span class="card-label">${lbl}</span>`;
+    if (owner !== 0 && i <= 5) {
+      const color = owner === 1 ? 'AZUL' : 'ROJO';
+      card.classList.add('has-img');
+      card.innerHTML = `<img src="ASSETS CARTAS Y DADOS/${i} ${color}.png" alt="${i}">`;
+    } else {
+      const lbl = owner===1 ? G.names[0].substring(0,4) : owner===2 ? G.names[1].substring(0,4) : '';
+      card.innerHTML = `<span>${i}</span><span class="card-label">${lbl}</span>`;
+    }
     board.appendChild(card);
   }
 
@@ -2261,17 +2289,23 @@ function onTimerExpired() {
 // ═══════════════════════════════════════════════════════════
 // DICE
 // ═══════════════════════════════════════════════════════════
+function getDiceImgSrc(val) {
+  const folder = G.current === 2 ? 'DADOS ROJOS' : 'DADOS AZULES';
+  return `ASSETS CARTAS Y DADOS/${folder}/DADO ROJO ${val}.png`;
+}
+
 function animateDice(finalVal, cb) {
   const el=$id('dice');
   el.classList.remove('active');
   el.classList.add('rolling');
   let ticks=0;
   const iv=setInterval(()=>{
-    el.textContent=DICE_ICONS[Math.floor(Math.random()*6)];
+    const rnd=Math.floor(Math.random()*6)+1;
+    el.innerHTML=`<img src="${getDiceImgSrc(rnd)}" style="width:80px;height:80px;object-fit:contain;border-radius:14px;display:block;">`;
     if(++ticks>=10){
       clearInterval(iv);
       el.classList.remove('rolling');
-      el.textContent=DICE_ICONS[finalVal-1];
+      el.innerHTML=`<img src="${getDiceImgSrc(finalVal)}" style="width:80px;height:80px;object-fit:contain;border-radius:14px;display:block;">`;
       cb();
     }
   },65);
